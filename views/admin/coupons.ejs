@@ -74,6 +74,11 @@
                         <input type="number" id="couponDiscount" required class="form-input" placeholder="e.g. 15" min="1" max="100">
                     </div>
                     <div class="form-group" style="margin-top: 16px;">
+                        <label>Minimum Order Amount (Optional)</label>
+                        <input type="number" id="couponMinOrderAmount" class="form-input" placeholder="e.g. 999" min="0" step="1">
+                        <small class="text-muted">Leave empty to allow this coupon on any order amount</small>
+                    </div>
+                    <div class="form-group" style="margin-top: 16px;">
                         <label>Coupon Type</label>
                         <select id="couponType" class="form-input">
                             <option value="public">Public (Visible to everyone)</option>
@@ -142,7 +147,12 @@
                                 <span style="font-family: monospace; font-size: 1.1rem; font-weight: 600; padding: 4px 8px; background: var(--bg-elevated); border-radius: var(--radius-sm);">${c.code}</span>
                                 ${expired ? '<span class="badge badge-danger" style="margin-left: 8px;">Expired</span>' : ''}
                             </td>
-                            <td style="font-weight: 600; color: var(--success);">${c.discountPercent}% OFF</td>
+                            <td>
+                                <div style="font-weight: 600; color: var(--success);">${c.discountPercent}% OFF</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                                    ${c.minOrderAmount ? `Min order ₹${Number(c.minOrderAmount).toLocaleString('en-IN')}` : 'No minimum'}
+                                </div>
+                            </td>
                             <td>
                                 <div style="font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; color: ${c.type==='private' ? 'var(--accent)' : 'var(--primary-light)'}">${c.type || 'public'}</div>
                                 <div style="font-size: 0.75rem; color: var(--text-muted);">
@@ -199,6 +209,7 @@
             document.getElementById('couponCode').value = coupon.code;
             document.getElementById('couponCode').disabled = true; // Code shouldn't change
             document.getElementById('couponDiscount').value = coupon.discountPercent;
+            document.getElementById('couponMinOrderAmount').value = coupon.minOrderAmount || '';
             document.getElementById('couponType').value = coupon.type || 'public';
             document.getElementById('couponUsageType').value = coupon.usageType || 'unlimited';
             document.getElementById('couponActive').checked = coupon.active !== false;
@@ -221,10 +232,12 @@
 
             const editId = document.getElementById('editCouponId').value;
             const validTillVal = document.getElementById('couponValidTill').value;
+            const minOrderAmountVal = document.getElementById('couponMinOrderAmount').value;
 
             const payload = {
                 code: document.getElementById('couponCode').value.toUpperCase(),
                 discountPercent: parseInt(document.getElementById('couponDiscount').value),
+                minOrderAmount: minOrderAmountVal ? Number(minOrderAmountVal) : null,
                 active: document.getElementById('couponActive').checked,
                 type: document.getElementById('couponType').value,
                 usageType: document.getElementById('couponUsageType').value,

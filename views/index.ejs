@@ -94,8 +94,13 @@
                         </div>
                         <% } %>
                         <div class="product-badges">
-                            <% if (product.isNew) { %>
+                            <% const badgeType = product.productBadgeType || (product.isNew ? 'new' : 'none'); %>
+                            <% if (badgeType === 'new') { %>
                             <span class="badge badge-new">NEW</span>
+                            <% } else if (badgeType === 'trending') { %>
+                            <span class="badge badge-trending">Trending</span>
+                            <% } else if (badgeType === 'custom' && product.productBadgeText) { %>
+                            <span class="badge badge-custom"><%= product.productBadgeText %></span>
                             <% } %>
                             <% if (product.originalPrice > product.salePrice) { %>
                             <span class="badge badge-discount">-<%= Math.round(((product.originalPrice - product.salePrice) / product.originalPrice) * 100) %>%</span>
@@ -148,8 +153,13 @@
                         </div>
                         <% } %>
                         <div class="product-badges">
-                            <% if (product.isNew) { %>
+                            <% const badgeType = product.productBadgeType || (product.isNew ? 'new' : 'none'); %>
+                            <% if (badgeType === 'new') { %>
                             <span class="badge badge-new">NEW</span>
+                            <% } else if (badgeType === 'trending') { %>
+                            <span class="badge badge-trending">Trending</span>
+                            <% } else if (badgeType === 'custom' && product.productBadgeText) { %>
+                            <span class="badge badge-custom"><%= product.productBadgeText %></span>
                             <% } %>
                             <% if (product.originalPrice > product.salePrice) { %>
                             <span class="badge badge-discount">-<%= Math.round(((product.originalPrice - product.salePrice) / product.originalPrice) * 100) %>%</span>

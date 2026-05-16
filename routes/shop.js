@@ -1,19 +1,28 @@
 const express = require('express');
 const router = express.Router();
 const { db } = require('../firebase-admin-config');
+const { normalizeProductImages } = require('../services/r2ImageUrls');
 
 // ─── Homepage ───
 router.get('/', async (req, res) => {
     try {
-        const snapshot = await db.ref('products').orderByChild('createdAt').limitToLast(12).once('value');
+        const [snapshot, newArrivalsSnap] = await Promise.all([
+            db.ref('products').orderByChild('createdAt').limitToLast(12).once('value'),
+            db.ref('settings/newArrivalProductIds').once('value')
+        ]);
         const products = [];
         snapshot.forEach(child => {
-            products.push({ id: child.key, ...child.val() });
+            products.push(normalizeProductImages({ id: child.key, ...child.val() }));
         });
         products.reverse();
 
         // Get featured / new products
-        const newProducts = products.filter(p => p.isNew);
+        const selectedNewArrivalIds = newArrivalsSnap.val() || [];
+        const selectedIdSet = new Set(Array.isArray(selectedNewArrivalIds) ? selectedNewArrivalIds : []);
+        const selectedProducts = products.filter(p => selectedIdSet.has(p.id) && p.active !== false);
+        const newProducts = selectedProducts.length > 0
+            ? selectedProducts.sort((a, b) => selectedNewArrivalIds.indexOf(a.id) - selectedNewArrivalIds.indexOf(b.id))
+            : products.filter(p => p.isNew && p.active !== false);
         const featuredProducts = products.slice(0, 8);
 
         res.render('index', {
@@ -45,7 +54,7 @@ router.get('/shop', async (req, res) => {
         snapshot.forEach(child => {
             const product = { id: child.key, ...child.val() };
             if (product.active !== false) {
-                products.push(product);
+                products.push(normalizeProductImages(product));
             }
         });
 
@@ -120,7 +129,7 @@ router.get('/product/:id', async (req, res) => {
             });
         }
 
-        product.id = req.params.id;
+        Object.assign(product, normalizeProductImages({ id: req.params.id, ...product }));
 
         // Calculate discount percentage
         product.discountPercent = Math.round(
@@ -137,7 +146,7 @@ router.get('/product/:id', async (req, res) => {
         const relatedProducts = [];
         relatedSnap.forEach(child => {
             if (child.key !== req.params.id) {
-                relatedProducts.push({ id: child.key, ...child.val() });
+                relatedProducts.push(normalizeProductImages({ id: child.key, ...child.val() }));
             }
         });
 

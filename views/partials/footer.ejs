@@ -124,6 +124,8 @@
     <script src="/js/cart.js"></script>
     <!-- Auth JS (Customer auth state) -->
     <script src="/js/auth.js"></script>
+    <!-- Device-side image cache -->
+    <script src="/js/image-cache.js"></script>
 
     <!-- Navbar scroll effect -->
     <script>
@@ -137,33 +139,87 @@
             }
         });
 
-        // Hamburger menu
+        // Hamburger menu & Mobile Nav
         const hamburger = document.getElementById('hamburger');
         const navLinks = document.getElementById('navLinks');
+        const navCloseBtn = document.getElementById('navCloseBtn');
+
+        function toggleNav() {
+            hamburger.classList.toggle('active');
+            navLinks.classList.toggle('active');
+        }
+
+        function closeNav() {
+            hamburger.classList.remove('active');
+            navLinks.classList.remove('active');
+        }
+
         if (hamburger) {
-            hamburger.addEventListener('click', () => {
-                hamburger.classList.toggle('active');
-                navLinks.classList.toggle('active');
+            hamburger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleNav();
             });
         }
 
+        if (navCloseBtn) {
+            navCloseBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeNav();
+            });
+        }
+
+        document.addEventListener('click', (e) => {
+            if (navLinks && navLinks.classList.contains('active')) {
+                // If the click is outside the nav-links, close it
+                if (!navLinks.contains(e.target) && (!hamburger || !hamburger.contains(e.target))) {
+                    closeNav();
+                }
+            }
+        });
+
         // Search toggle
         const searchToggle = document.getElementById('searchToggle');
+        const searchToggleMobile = document.getElementById('searchToggleMobile');
         const searchOverlay = document.getElementById('searchOverlay');
         const searchClose = document.getElementById('searchClose');
         const searchInput = document.getElementById('searchInput');
 
+        function openSearch() {
+            searchOverlay.classList.add('active');
+            searchInput.focus();
+            closeNav(); // close mobile nav if open
+        }
+
         if (searchToggle) {
-            searchToggle.addEventListener('click', () => {
-                searchOverlay.classList.add('active');
-                searchInput.focus();
-            });
+            searchToggle.addEventListener('click', openSearch);
+        }
+        if (searchToggleMobile) {
+            searchToggleMobile.addEventListener('click', openSearch);
         }
         if (searchClose) {
             searchClose.addEventListener('click', () => {
                 searchOverlay.classList.remove('active');
             });
         }
+        document.addEventListener('error', function(e) {
+            if (e.target.tagName === 'IMG') {
+                const src = e.target.src;
+                // If it's a Cloudflare Worker URL and doesn't have the ?key= param, try to fix it
+                if (src.includes('workers.dev') && src.includes('/images/') && !src.includes('?key=')) {
+                    const baseUrl = src.split('/images/')[0];
+                    const pathPart = src.split(baseUrl)[1].substring(1); // 'images/...'
+                    
+                    // Construct new URL using query parameter
+                    const newSrc = baseUrl + '/?key=' + pathPart; // Try literal path first
+                    
+                    console.log('R2 Fix: Retrying broken image with key parameter');
+                    e.target.src = newSrc;
+                    
+                    // Mark to avoid infinite loop if it still fails
+                    e.target.setAttribute('data-retry', '1');
+                }
+            }
+        }, true);
     </script>
 </body>
 </html>

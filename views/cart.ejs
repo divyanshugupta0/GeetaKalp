@@ -143,6 +143,14 @@
         // Apply saved coupon if exists
         const savedCoupon = getSavedCoupon();
         if (savedCoupon && savedCoupon.discountPercent) {
+            const minOrderAmount = Number(savedCoupon.minOrderAmount || 0);
+            if (minOrderAmount > 0 && subtotal < minOrderAmount) {
+                localStorage.removeItem('geetakalp_coupon');
+                document.getElementById('couponRow').style.display = 'none';
+                document.getElementById('couponBtnModal').style.display = 'flex';
+                document.getElementById('couponMessage').style.color = 'var(--danger)';
+                document.getElementById('couponMessage').textContent = `Coupon removed. Minimum order required: ₹${minOrderAmount.toLocaleString('en-IN')}`;
+            } else {
             couponDiscount = Math.round((subtotal * savedCoupon.discountPercent) / 100);
             total -= couponDiscount;
             
@@ -150,6 +158,8 @@
             document.getElementById('appliedCouponCode').textContent = `(${savedCoupon.code})`;
             document.getElementById('cartCouponDiscount').textContent = `-₹${couponDiscount.toLocaleString('en-IN')}`;
             document.getElementById('couponBtnModal').style.display = 'none';
+            document.getElementById('couponMessage').textContent = '';
+            }
         } else {
             document.getElementById('couponRow').style.display = 'none';
             document.getElementById('couponBtnModal').style.display = 'flex';
@@ -165,6 +175,10 @@
         try {
             return JSON.parse(localStorage.getItem('geetakalp_coupon'));
         } catch { return null; }
+    }
+
+    function getCartSubtotal() {
+        return getCart().reduce((sum, item) => sum + (Number(item.salePrice || 0) * Number(item.quantity || 0)), 0);
     }
 
     async function openCartCouponModal() {
@@ -188,6 +202,7 @@
                             <div>
                                 <div style="font-weight: 700; font-family: monospace; font-size: 1.1rem; color: var(--primary);">${c.code}</div>
                                 <div style="font-size: 0.85rem; color: var(--text-muted);">${c.discountPercent}% OFF your entire order</div>
+                                ${c.minOrderAmount ? `<div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Min order ₹${Number(c.minOrderAmount).toLocaleString('en-IN')}</div>` : ''}
                             </div>
                             <button class="btn btn-primary btn-sm" onclick="applyCouponCode('${c.code}')">Apply</button>
                         </div>
@@ -259,10 +274,19 @@
                 }
             }
 
+            const subtotal = getCartSubtotal();
+            const minOrderAmount = Number(coupon.minOrderAmount || 0);
+            if (minOrderAmount > 0 && subtotal < minOrderAmount) {
+                msgEl.style.color = 'var(--danger)';
+                msgEl.textContent = `Add items worth ₹${(minOrderAmount - subtotal).toLocaleString('en-IN')} more to use this coupon`;
+                return;
+            }
+
             // Save to localStorage
             localStorage.setItem('geetakalp_coupon', JSON.stringify({
                 code: coupon.code,
-                discountPercent: coupon.discountPercent
+                discountPercent: coupon.discountPercent,
+                minOrderAmount: coupon.minOrderAmount || null
             }));
 
             closeCartCouponModal();

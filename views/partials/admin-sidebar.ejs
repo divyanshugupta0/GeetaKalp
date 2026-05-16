@@ -1,7 +1,10 @@
 <aside class="admin-sidebar" id="adminSidebar">
-    <div class="sidebar-header">
-        <a href="/" class="admin-logo"><span class="logo-icon">✦</span><span class="logo-text">Geeta Kalp</span></a>
-        <span class="admin-badge">Admin</span>
+    <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <a href="/" class="admin-logo"><span class="logo-icon">✦</span><span class="logo-text">Geeta Kalp</span></a>
+            <span class="admin-badge">Admin</span>
+        </div>
+        <button class="admin-sidebar-close" id="adminSidebarClose" aria-label="Close Sidebar"><i class="fas fa-times"></i></button>
     </div>
     <nav class="sidebar-nav">
         <a href="/admin" class="sidebar-link <%= activePage === 'dashboard' ? 'active' : '' %>"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
@@ -18,3 +21,49 @@
         <button class="sidebar-link logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
     </div>
 </aside>
+
+<script src="/js/image-cache.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const adminSidebar = document.getElementById('adminSidebar');
+        const adminSidebarClose = document.getElementById('adminSidebarClose');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+
+        // Centralized toggle logic
+        if (sidebarToggle) {
+            const newToggle = sidebarToggle.cloneNode(true);
+            sidebarToggle.parentNode.replaceChild(newToggle, sidebarToggle);
+            
+            newToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (window.innerWidth <= 768) {
+                    adminSidebar.classList.toggle('active');
+                } else {
+                    adminSidebar.classList.toggle('collapsed');
+                }
+            });
+        }
+
+        function closeAdminSidebar() {
+            if (adminSidebar) {
+                adminSidebar.classList.remove('active');
+            }
+        }
+
+        if (adminSidebarClose) {
+            adminSidebarClose.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeAdminSidebar();
+            });
+        }
+
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768 && adminSidebar && adminSidebar.classList.contains('active')) {
+                const toggle = document.getElementById('sidebarToggle');
+                if (!adminSidebar.contains(e.target) && (!toggle || !toggle.contains(e.target))) {
+                    closeAdminSidebar();
+                }
+            }
+        });
+    });
+</script>

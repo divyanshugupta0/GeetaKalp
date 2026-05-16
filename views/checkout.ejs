@@ -178,6 +178,11 @@
         // Apply saved coupon if exists
         const savedCoupon = getSavedCoupon();
         if (savedCoupon && savedCoupon.discountPercent) {
+            const minOrderAmount = Number(savedCoupon.minOrderAmount || 0);
+            if (minOrderAmount > 0 && subtotal < minOrderAmount) {
+                localStorage.removeItem('geetakalp_coupon');
+                showToast(`Coupon removed. Minimum order required: ₹${minOrderAmount.toLocaleString('en-IN')}`, 'error');
+            } else {
             const couponDiscount = Math.round((subtotal * savedCoupon.discountPercent) / 100);
             total -= couponDiscount;
             
@@ -188,6 +193,7 @@
                     <span class="savings-text">-₹${couponDiscount.toLocaleString('en-IN')}</span>
                 </div>
             `;
+            }
         }
 
         container.innerHTML = html;
@@ -369,9 +375,18 @@
         const savedCoupon = getSavedCoupon();
         let appliedCouponInfo = null;
         if (savedCoupon && savedCoupon.discountPercent) {
+            const minOrderAmount = Number(savedCoupon.minOrderAmount || 0);
+            if (minOrderAmount > 0 && subtotal < minOrderAmount) {
+                localStorage.removeItem('geetakalp_coupon');
+                showToast(`This coupon requires a minimum order amount of ₹${minOrderAmount.toLocaleString('en-IN')}`, 'error');
+                renderCheckoutSummary();
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-lock"></i> Pay Securely';
+                return;
+            }
             const couponDiscount = Math.round((subtotal * savedCoupon.discountPercent) / 100);
             total -= couponDiscount;
-            appliedCouponInfo = { code: savedCoupon.code, discount: couponDiscount };
+            appliedCouponInfo = { code: savedCoupon.code, discount: couponDiscount, minOrderAmount: savedCoupon.minOrderAmount || null };
         }
 
         const customerInfo = {

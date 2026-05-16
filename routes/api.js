@@ -4,6 +4,7 @@ const { db, admin } = require('../firebase-admin-config');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const multer = require('multer');
+const { normalizeProductImages, toPrivateR2ImageUrl } = require('../services/r2ImageUrls');
 
 // Configure multer for memory storage
 const upload = multer({
@@ -77,7 +78,252 @@ async function sendOrderNotifications(orderId, amount, customerInfo, paymentMeth
     }
 }
 
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function formatINR(amount) {
+    return `₹${Number(amount || 0).toLocaleString('en-IN')}`;
+}
+
+function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
+}
+
+async function sendBrevoEmail({ to, subject, htmlContent, textContent }) {
+    if (!process.env.BREVO_API_KEY) {
+        return { success: false, skipped: true, reason: 'BREVO_API_KEY is not configured' };
+    }
+
+    const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.MAIL_FROM || 'no-reply@geetakalp.com';
+    const senderName = process.env.BREVO_SENDER_NAME || 'Geeta Kalp';
+    const recipients = (Array.isArray(to) ? to : [to])
+        .filter(recipient => recipient && isValidEmail(recipient.email))
+        .map(recipient => ({
+            email: recipient.email.trim(),
+            name: recipient.name || recipient.email.trim()
+        }));
+
+    if (!recipients.length) {
+        return { success: false, skipped: true, reason: 'No valid email recipients' };
+    }
+
+    let response;
+    try {
+        response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'api-key': process.env.BREVO_API_KEY
+            },
+            body: JSON.stringify({
+                sender: { name: senderName, email: senderEmail },
+                to: recipients,
+                subject,
+                htmlContent,
+                textContent
+            })
+        });
+    } catch (error) {
+        console.error('Brevo email request failed:', error.message);
+        return { success: false, error: error.message };
+    }
+
+    if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        console.error('Brevo email failed:', response.status, errorText);
+        return { success: false, status: response.status, error: errorText };
+    }
+
+    const result = await response.json().catch(() => ({}));
+    return { success: true, result };
+}
+
+function buildOrderItemsHtml(items) {
+    return (items || []).map(item => {
+        const quantity = Number(item.quantity || 1);
+        const price = Number(item.price || item.salePrice || 0);
+        const lineTotal = price * quantity;
+        return `
+            <tr>
+                <td style="padding: 10px 0; border-bottom: 1px solid #eee;">${escapeHtml(item.name || 'Item')}</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #eee; text-align: center;">${quantity}</td>
+                <td style="padding: 10px 0; border-bottom: 1px solid #eee; text-align: right;">${formatINR(lineTotal)}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function sendOrderNotifications(orderId, amount, customerInfo, paymentMethod, items) {
+    try {
+        const adminEmail = process.env.BREVO_ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'admin@geetakalp.com';
+        const itemsList = (items || []).map(i => `${i.name} (x${i.quantity})`).join(', ');
+        const customerName = customerInfo.name || 'Customer';
+        const paymentLabel = String(paymentMethod || 'online').toUpperCase();
+        const address = `${customerInfo.address || ''}, ${customerInfo.city || ''}, ${customerInfo.state || ''} - ${customerInfo.pincode || ''}`;
+        const itemRows = buildOrderItemsHtml(items);
+
+        if (process.env.BREVO_API_KEY && isValidEmail(adminEmail)) {
+            await sendBrevoEmail({
+                to: [{ email: adminEmail, name: 'Geeta Kalp Admin' }],
+                subject: `New Order Received - ${orderId}`,
+                textContent: `New order received.\n\nOrder ID: ${orderId}\nAmount: ${formatINR(amount)}\nCustomer: ${customerName} (${customerInfo.email || 'No email'})\nPhone: ${customerInfo.phone || 'N/A'}\nPayment Method: ${paymentLabel}\nItems: ${itemsList}\nAddress: ${address}`,
+                htmlContent: `
+                    <div style="font-family: Arial, sans-serif; max-width: 680px; margin: 0 auto; color: #222;">
+                        <h2 style="color: #4f46e5;">New Order Received</h2>
+                        <p><strong>Order ID:</strong> ${escapeHtml(orderId)}</p>
+                        <p><strong>Total:</strong> ${formatINR(amount)}</p>
+                        <p><strong>Payment:</strong> ${escapeHtml(paymentLabel)}</p>
+                        <h3>Customer</h3>
+                        <p>
+                            ${escapeHtml(customerName)}<br>
+                            ${escapeHtml(customerInfo.email || 'No email')}<br>
+                            ${escapeHtml(customerInfo.phone || 'N/A')}<br>
+                            ${escapeHtml(address)}
+                        </p>
+                        <h3>Items</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left; padding-bottom: 8px;">Item</th>
+                                    <th style="text-align: center; padding-bottom: 8px;">Qty</th>
+                                    <th style="text-align: right; padding-bottom: 8px;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>${itemRows}</tbody>
+                        </table>
+                    </div>
+                `
+            });
+        }
+
+        if (process.env.WEB3FORMS_ACCESS_KEY) {
+            await fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    access_key: process.env.WEB3FORMS_ACCESS_KEY,
+                    subject: `New Order Received - ${orderId}`,
+                    from_name: 'Geeta Kalp System',
+                    to: adminEmail,
+                    message: `A new order has been placed!\n\nOrder ID: ${orderId}\nAmount: ${formatINR(amount)}\nCustomer: ${customerName} (${customerInfo.email})\nPhone: ${customerInfo.phone}\nPayment Method: ${paymentLabel}\n\nItems: ${itemsList}\nAddress: ${address}`
+                })
+            });
+        }
+
+        if (process.env.BREVO_API_KEY && isValidEmail(customerInfo.email)) {
+            await sendBrevoEmail({
+                to: [{ email: customerInfo.email, name: customerName }],
+                subject: `Order Confirmation - ${orderId}`,
+                textContent: `Hi ${customerName},\n\nThank you for your order.\n\nOrder ID: ${orderId}\nTotal Amount: ${formatINR(amount)}\nPayment Method: ${paymentLabel}\n\nWe will notify you once your order ships.\n\nGeeta Kalp Team`,
+                htmlContent: `
+                    <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #333;">
+                        <h1 style="color: #6366f1;">Thank you for your order!</h1>
+                        <p>Hi <strong>${escapeHtml(customerName)}</strong>,</p>
+                        <p>We have successfully received your order and are getting it ready for shipment.</p>
+                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                            <p style="margin: 5px 0;"><strong>Order ID:</strong> ${escapeHtml(orderId)}</p>
+                            <p style="margin: 5px 0;"><strong>Total Amount:</strong> ${formatINR(amount)}</p>
+                            <p style="margin: 5px 0;"><strong>Payment Method:</strong> ${escapeHtml(paymentLabel)}</p>
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left; padding-bottom: 8px;">Item</th>
+                                    <th style="text-align: center; padding-bottom: 8px;">Qty</th>
+                                    <th style="text-align: right; padding-bottom: 8px;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>${itemRows}</tbody>
+                        </table>
+                        <p>We will notify you once your order ships.</p>
+                        <p>Best Regards,<br>Geeta Kalp Team</p>
+                    </div>
+                `
+            });
+        }
+    } catch (error) {
+        console.error('Notification Error:', error);
+    }
+}
+
+async function validateCouponForOrder(coupon, subtotal, customerEmail) {
+    if (!coupon || !coupon.code) {
+        return { valid: true, couponInfo: null, discount: 0 };
+    }
+
+    const couponSnap = await db.ref('coupons').orderByChild('code').equalTo(String(coupon.code).toUpperCase()).once('value');
+    if (!couponSnap.exists()) {
+        return { valid: false, error: 'Invalid coupon code' };
+    }
+
+    const key = Object.keys(couponSnap.val())[0];
+    const couponData = couponSnap.val()[key];
+
+    if (couponData.active === false) {
+        return { valid: false, error: 'This coupon is inactive' };
+    }
+
+    if (couponData.validTill && new Date(couponData.validTill).getTime() < Date.now()) {
+        return { valid: false, error: 'This coupon has expired' };
+    }
+
+    if (couponData.usageType === 'global_single' && (couponData.usedCount || 0) >= 1) {
+        return { valid: false, error: 'This coupon limit has been reached' };
+    }
+
+    const minOrderAmount = Math.max(0, Number(couponData.minOrderAmount || 0));
+    if (minOrderAmount > 0 && subtotal < minOrderAmount) {
+        return {
+            valid: false,
+            error: `This coupon requires a minimum order amount of ₹${minOrderAmount.toLocaleString('en-IN')}`
+        };
+    }
+
+    if (couponData.usageType === 'per_user_single') {
+        if (!customerEmail) {
+            return { valid: false, error: 'Please login to use this coupon' };
+        }
+
+        const safeEmail = customerEmail.replace(/\./g, ',');
+        if (couponData.usedBy && couponData.usedBy[safeEmail]) {
+            return { valid: false, error: 'You have already used this coupon' };
+        }
+    }
+
+    const discount = Math.round((subtotal * Number(couponData.discountPercent || 0)) / 100);
+    return {
+        valid: true,
+        couponInfo: {
+            code: couponData.code,
+            discount,
+            discountPercent: Number(couponData.discountPercent || 0),
+            minOrderAmount: minOrderAmount || null
+        },
+        discount
+    };
+}
+
 // ─── Middleware: Verify Admin Token ───
+function normalizeProductBadge(type, text, isNewFallback = false) {
+    const allowedTypes = ['none', 'new', 'trending', 'custom'];
+    const badgeType = allowedTypes.includes(type) ? type : (isNewFallback ? 'new' : 'none');
+    const badgeText = badgeType === 'custom'
+        ? String(text || '').trim().substring(0, 18)
+        : '';
+
+    return {
+        productBadgeType: badgeType === 'custom' && !badgeText ? 'none' : badgeType,
+        productBadgeText: badgeText
+    };
+}
+
 const verifyAdmin = async (req, res, next) => {
     const token = req.headers.authorization?.split('Bearer ')[1];
     
@@ -117,7 +363,7 @@ router.get('/products', async (req, res) => {
         const snapshot = await db.ref('products').once('value');
         const products = [];
         snapshot.forEach(child => {
-            products.push({ id: child.key, ...child.val() });
+            products.push(normalizeProductImages({ id: child.key, ...child.val() }));
         });
         res.json({ success: true, products });
     } catch (error) {
@@ -133,7 +379,7 @@ router.get('/products/:id', async (req, res) => {
         if (!product) {
             return res.status(404).json({ success: false, error: 'Product not found' });
         }
-        res.json({ success: true, product: { id: req.params.id, ...product } });
+        res.json({ success: true, product: normalizeProductImages({ id: req.params.id, ...product }) });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -142,20 +388,23 @@ router.get('/products/:id', async (req, res) => {
 // ─── Add Product (Admin) ───
 router.post('/products', verifyAdmin, async (req, res) => {
     try {
-        const { name, description, originalPrice, salePrice, category, images, isNew, active, stock, paymentMethods } = req.body;
+        const { name, description, originalPrice, salePrice, category, images, isNew, productBadgeType, productBadgeText, active, stock, paymentMethods } = req.body;
 
         if (!name || !originalPrice || !salePrice) {
             return res.status(400).json({ success: false, error: 'Name, original price, and sale price are required.' });
         }
 
+        const badgeData = normalizeProductBadge(productBadgeType, productBadgeText, isNew);
         const productData = {
             name,
             description: description || '',
             originalPrice: parseFloat(originalPrice),
             salePrice: parseFloat(salePrice),
             category: category || 'General',
-            images: images || [],
-            isNew: isNew || false,
+            images: Array.isArray(images) ? images.map(toPrivateR2ImageUrl).filter(Boolean) : [],
+            isNew: badgeData.productBadgeType === 'new',
+            productBadgeType: badgeData.productBadgeType,
+            productBadgeText: badgeData.productBadgeText,
             active: active !== false,
             stock: parseInt(stock) || 0,
             paymentMethods: paymentMethods || { razorpay: true, cod: true },
@@ -174,6 +423,13 @@ router.post('/products', verifyAdmin, async (req, res) => {
 router.put('/products/:id', verifyAdmin, async (req, res) => {
     try {
         const updates = { ...req.body };
+        if (Array.isArray(updates.images)) {
+            updates.images = updates.images.map(toPrivateR2ImageUrl).filter(Boolean);
+        }
+        const badgeData = normalizeProductBadge(updates.productBadgeType, updates.productBadgeText, updates.isNew);
+        updates.productBadgeType = badgeData.productBadgeType;
+        updates.productBadgeText = badgeData.productBadgeText;
+        updates.isNew = badgeData.productBadgeType === 'new';
         if (updates.originalPrice) updates.originalPrice = parseFloat(updates.originalPrice);
         if (updates.salePrice) updates.salePrice = parseFloat(updates.salePrice);
         if (updates.stock) updates.stock = parseInt(updates.stock);
@@ -204,9 +460,27 @@ router.patch('/products/:id/toggle-new', verifyAdmin, async (req, res) => {
         const currentValue = snapshot.val();
         await db.ref(`products/${req.params.id}`).update({
             isNew: !currentValue,
+            productBadgeType: !currentValue ? 'new' : 'none',
+            productBadgeText: '',
             updatedAt: admin.database.ServerValue.TIMESTAMP
         });
         res.json({ success: true, isNew: !currentValue, message: `NEW badge ${!currentValue ? 'enabled' : 'disabled'}` });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.patch('/products/:id/images', verifyAdmin, async (req, res) => {
+    try {
+        const images = Array.isArray(req.body.images) ? req.body.images : [];
+        const normalizedImages = images.map(toPrivateR2ImageUrl).filter(Boolean);
+
+        await db.ref(`products/${req.params.id}`).update({
+            images: normalizedImages,
+            updatedAt: admin.database.ServerValue.TIMESTAMP
+        });
+
+        res.json({ success: true, images: normalizedImages });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -250,11 +524,20 @@ router.post('/create-order', async (req, res) => {
             return res.status(503).json({ success: false, error: 'Payment gateway not configured' });
         }
 
-        const { amount, amountToPayNow, paymentMethod, currency, customerInfo, items, coupon } = req.body;
+        let { amount, amountToPayNow, paymentMethod, currency, customerInfo, items, coupon } = req.body;
 
         if (!amount || !customerInfo || !items) {
             return res.status(400).json({ success: false, error: 'Missing required fields' });
         }
+
+        const subtotal = items.reduce((sum, item) => {
+            return sum + (Number(item.price || 0) * Number(item.quantity || 0));
+        }, 0);
+        const couponValidation = await validateCouponForOrder(coupon, subtotal, customerInfo.email);
+        if (!couponValidation.valid) {
+            return res.status(400).json({ success: false, error: couponValidation.error });
+        }
+        coupon = couponValidation.couponInfo;
 
         const isCOD = paymentMethod === 'cod';
         const payNow = amountToPayNow !== undefined ? amountToPayNow : amount;
@@ -270,8 +553,7 @@ router.post('/create-order', async (req, res) => {
                 customerInfo,
                 items,
                 coupon: coupon || null,
-                status: 'paid', // Or 'confirmed_cod'
-                paidAt: admin.database.ServerValue.TIMESTAMP,
+                status: 'processing',
                 createdAt: admin.database.ServerValue.TIMESTAMP
             };
             const orderRef = await db.ref('orders').push(orderData);
@@ -357,17 +639,19 @@ router.post('/verify-payment', async (req, res) => {
             .digest('hex');
 
         if (expectedSignature === razorpay_signature) {
+            const orderSnap = await db.ref(`orders/${orderId}`).once('value');
+            const orderData = orderSnap.val();
+            const nextStatus = orderData && orderData.paymentMethod === 'cod' ? 'processing' : 'paid';
+
             // Update order status in Firebase
             await db.ref(`orders/${orderId}`).update({
-                status: 'paid',
+                status: nextStatus,
                 razorpayPaymentId: razorpay_payment_id,
                 razorpaySignature: razorpay_signature,
                 paidAt: admin.database.ServerValue.TIMESTAMP
             });
 
             // Burn the coupon on successful payment
-            const orderSnap = await db.ref(`orders/${orderId}`).once('value');
-            const orderData = orderSnap.val();
             if (orderData && orderData.coupon && orderData.coupon.code && orderData.customerInfo && orderData.customerInfo.email) {
                 const couponSnap = await db.ref('coupons').orderByChild('code').equalTo(orderData.coupon.code).once('value');
                 if (couponSnap.exists()) {
@@ -660,58 +944,271 @@ router.delete('/reviews/:id', verifyAdmin, async (req, res) => {
 });
 
 const sharp = require('sharp');
+const { uploadToR2, fetchFromR2, deleteFromR2, fetchCredentialsFromFirebase, clearCredentialsCache } = require('../services/cloudflareR2');
 
-// ─── Image Upload via Cloudflare R2 Worker ───
+// ─── Debug: Inspect Firebase R2 Keys ───
+router.get('/debug/firebase-keys', verifyAdmin, async (req, res) => {
+    try {
+        const [accessKeySnap, secretKeySnap, accountIdSnap, bucketSnap, endpointSnap, publicUrlSnap] = await Promise.all([
+            db.ref('cloudflare_access_key_id').once('value'),
+            db.ref('cloudflare_secret_access_key').once('value'),
+            db.ref('cloudflare_account_id').once('value'),
+            db.ref('cloudflare_r2_bucket_name').once('value'),
+            db.ref('cloudflare_endpoint').once('value'),
+            db.ref('cloudflare_r2_public_url').once('value')
+        ]);
+
+        res.json({
+            success: true,
+            firebase: {
+                cloudflare_access_key_id: accessKeySnap.val() ? accessKeySnap.val().substring(0, 10) + '...' : null,
+                cloudflare_secret_access_key: secretKeySnap.val() ? '***configured***' : null,
+                cloudflare_account_id: accountIdSnap.val(),
+                cloudflare_r2_bucket_name: bucketSnap.val(),
+                cloudflare_endpoint: endpointSnap.val(),
+                cloudflare_r2_public_url: publicUrlSnap.val()
+            },
+            instructions: 'Add missing keys to Firebase Realtime Database at root level. Expected endpoint format: https://ACCOUNT_ID.r2.cloudflarestorage.com'
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ─── Debug: Test Endpoint Connectivity ───
+router.get('/debug/test-endpoint', verifyAdmin, async (req, res) => {
+    try {
+        const endpointSnap = await db.ref('cloudflare_endpoint').once('value');
+        const endpoint = endpointSnap.val();
+
+        if (!endpoint) {
+            return res.status(400).json({
+                success: false,
+                error: 'cloudflare_endpoint not set in Firebase'
+            });
+        }
+
+        console.log(`🧪 Testing endpoint: ${endpoint}`);
+
+        // Validate endpoint format
+        const isValidFormat = /^https:\/\/[a-zA-Z0-9]+\.r2\.cloudflarestorage\.com\/?$/.test(endpoint);
+        
+        if (!isValidFormat) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid endpoint format',
+                received: endpoint,
+                expected: 'https://ACCOUNT_ID.r2.cloudflarestorage.com',
+                hint: 'Make sure the endpoint is in the correct R2 format'
+            });
+        }
+
+        // Try to connect
+        try {
+            const testUrl = endpoint.replace(/\/$/, '') + '/';
+            const response = await fetch(testUrl, {
+                method: 'HEAD',
+                timeout: 5000
+            });
+
+            res.json({
+                success: true,
+                endpoint,
+                status: response.status,
+                message: 'Endpoint is reachable',
+                format: 'Valid R2 endpoint format'
+            });
+        } catch (connectError) {
+            res.status(400).json({
+                success: false,
+                endpoint,
+                error: connectError.message,
+                hint: 'Endpoint format looks valid, but server cannot connect. Check:\n1. Firewall rules\n2. Cloudflare account ID is correct\n3. Network connectivity',
+                format: 'Valid R2 endpoint format'
+            });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ─── Debug: Verify R2 Credentials ───
+router.get('/debug/verify-credentials', verifyAdmin, async (req, res) => {
+    try {
+        console.log('\n🔍 Verifying R2 credentials...\n');
+        
+        const credentials = await fetchCredentialsFromFirebase(db);
+        
+        // Check for common issues
+        const issues = [];
+        
+        if (credentials.accessKeyId.includes(' ')) {
+            issues.push('Access Key ID has spaces');
+        }
+        if (credentials.secretAccessKey.includes(' ')) {
+            issues.push('Secret Access Key has spaces');
+        }
+        if (!credentials.accessKeyId.match(/^[a-z0-9]+$/i)) {
+            issues.push('Access Key ID contains invalid characters');
+        }
+        
+        res.json({
+            success: true,
+            credentials: {
+                accessKeyId: `${credentials.accessKeyId.substring(0, 5)}...${credentials.accessKeyId.substring(credentials.accessKeyId.length - 5)}`,
+                accessKeyIdLength: credentials.accessKeyId.length,
+                secretAccessKeyLength: credentials.secretAccessKey.length,
+                bucketName: credentials.bucketName,
+                endpoint: credentials.endpoint,
+                accountId: credentials.accountId
+            },
+            issues: issues.length > 0 ? issues : ['None detected'],
+            nextStep: issues.length > 0 ? 'Fix the issues above in Firebase' : 'Credentials look valid. Try uploading an image.'
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ─── Debug: Test Endpoint Connectivity ───
+router.get('/debug/r2-config', verifyAdmin, async (req, res) => {
+    try {
+        const credentials = await fetchCredentialsFromFirebase(db);
+        res.json({
+            success: true,
+            config: {
+                accessKeyId: credentials.accessKeyId ? credentials.accessKeyId.substring(0, 10) + '...' : '❌ Missing',
+                secretAccessKey: credentials.secretAccessKey ? '✅ Configured' : '❌ Missing',
+                accountId: credentials.accountId || '❌ Missing',
+                bucketName: credentials.bucketName || '❌ Missing',
+                endpoint: credentials.endpoint || '❌ Missing',
+                publicUrl: credentials.publicUrl || 'Optional; private bucket uses /api/fetch-image/:key'
+            },
+            message: '✅ All R2 credentials are configured correctly'
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            error: error.message,
+            message: '❌ R2 configuration incomplete'
+        });
+    }
+});
+
+// ─── Debug: Clear Credentials Cache ───
+router.post('/debug/clear-cache', verifyAdmin, async (req, res) => {
+    try {
+        clearCredentialsCache();
+        res.json({ success: true, message: 'Credentials cache cleared' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ─── Image Upload to Cloudflare R2 ───
 router.post('/upload', verifyAdmin, upload.single('image'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, error: 'No file uploaded' });
         }
 
-        // Fetch credentials from Firebase root
-        const [endpointSnap, tokenSnap] = await Promise.all([
-            db.ref('cloudflare_endpoint').once('value'),
-            db.ref('cloudflare_token_value').once('value')
-        ]);
-
-        const endpoint = endpointSnap.val();
-        const token = tokenSnap.val();
-
-        if (!endpoint || !token) {
-            return res.status(500).json({ success: false, error: 'Cloudflare credentials not configured in database' });
+        // Validate file type
+        if (!req.file.mimetype.startsWith('image/')) {
+            return res.status(400).json({ success: false, error: 'Only image files are allowed' });
         }
 
-        // Compress image using sharp losslessly (webp format)
+        // Compress image using sharp to WebP format
         const compressedBuffer = await sharp(req.file.buffer)
-            .webp({ lossless: true })
+            .webp({ quality: 80, lossless: false })
             .toBuffer();
 
-        // Generate a unique filename with webp extension
-        const filename = `images/${Date.now()}_${crypto.randomBytes(4).toString('hex')}.webp`;
+        // Upload to Cloudflare R2 (pass db reference)
+        const uploadResult = await uploadToR2(
+            compressedBuffer,
+            req.file.originalname,
+            'image/webp',
+            db
+        );
 
-        // Upload to Cloudflare Worker
-        const uploadUrl = `${endpoint.replace(/\/$/, '')}/?key=${encodeURIComponent(filename)}`;
-        
-        const response = await fetch(uploadUrl, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'image/webp'
-            },
-            body: compressedBuffer
-        });
-
-        if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Worker upload failed: ${response.status} ${errText}`);
+        if (!uploadResult.success) {
+            console.error('R2 Upload failed:', uploadResult.error);
+            return res.status(500).json({ 
+                success: false, 
+                error: `Upload failed: ${uploadResult.error}` 
+            });
         }
 
-        // URL to access the public image
-        const publicUrl = uploadUrl;
-
-        res.json({ success: true, url: publicUrl });
+        res.json({ 
+            success: true, 
+            url: uploadResult.url,
+            key: uploadResult.key,
+            message: 'Image uploaded successfully'
+        });
     } catch (error) {
-        console.error('Upload Error:', error);
+        console.error('❌ Upload Error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ─── Fetch Image from Cloudflare R2 ───
+router.get('/fetch-image/:key(*)', async (req, res) => {
+    try {
+        const key = req.params.key;
+        
+        if (!key) {
+            return res.status(400).json({ success: false, error: 'Image key is required' });
+        }
+
+        const fetchResult = await fetchFromR2(key, db);
+
+        if (!fetchResult.success) {
+            console.error('R2 Fetch failed:', fetchResult.error);
+            return res.status(404).json({ 
+                success: false, 
+                error: `Image not found: ${fetchResult.error}` 
+            });
+        }
+
+        // Set appropriate headers
+        res.setHeader('Content-Type', fetchResult.contentType || 'image/webp');
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // Cache for 1 year
+        if (fetchResult.contentLength) {
+            res.setHeader('Content-Length', fetchResult.contentLength);
+        }
+
+        // Stream the image
+        fetchResult.body.pipe(res);
+    } catch (error) {
+        console.error('❌ Fetch Error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ─── Delete Image from Cloudflare R2 ───
+router.delete('/delete-image/:key(*)', verifyAdmin, async (req, res) => {
+    try {
+        const key = req.params.key;
+        
+        if (!key) {
+            return res.status(400).json({ success: false, error: 'Image key is required' });
+        }
+
+        const deleteResult = await deleteFromR2(key, db);
+
+        if (!deleteResult.success) {
+            console.error('R2 Delete failed:', deleteResult.error);
+            return res.status(500).json({ 
+                success: false, 
+                error: `Delete failed: ${deleteResult.error}` 
+            });
+        }
+
+        res.json({ 
+            success: true, 
+            message: 'Image deleted successfully'
+        });
+    } catch (error) {
+        console.error('❌ Delete Error:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -728,7 +1225,11 @@ router.get('/public-coupons', async (req, res) => {
             if (c.active !== false && c.type !== 'private') {
                 if (c.usageType === 'global_single' && (c.usedCount || 0) >= 1) continue;
                 if (c.validTill && new Date(c.validTill).getTime() < Date.now()) continue;
-                publicCoupons.push({ code: c.code, discountPercent: c.discountPercent });
+                publicCoupons.push({
+                    code: c.code,
+                    discountPercent: c.discountPercent,
+                    minOrderAmount: Math.max(0, Number(c.minOrderAmount || 0)) || null
+                });
             }
         }
         res.json({ success: true, coupons: publicCoupons });
@@ -768,7 +1269,7 @@ router.get('/coupons', verifyAdmin, async (req, res) => {
 
 router.post('/coupons', verifyAdmin, async (req, res) => {
     try {
-        const { code, discountPercent, active, type, usageType, validTill } = req.body;
+        const { code, discountPercent, minOrderAmount, active, type, usageType, validTill } = req.body;
         if (!code || !discountPercent) return res.status(400).json({ success: false, error: 'Code and discount required' });
         
         // Ensure code doesn't exist
@@ -780,6 +1281,7 @@ router.post('/coupons', verifyAdmin, async (req, res) => {
         const ref = await db.ref('coupons').push({ 
             code: code.toUpperCase(), 
             discountPercent: Number(discountPercent), 
+            minOrderAmount: Math.max(0, Number(minOrderAmount || 0)) || null,
             active: active !== false,
             type: type || 'public',
             usageType: usageType || 'unlimited',
@@ -795,10 +1297,11 @@ router.post('/coupons', verifyAdmin, async (req, res) => {
 
 router.put('/coupons/:id', verifyAdmin, async (req, res) => {
     try {
-        const { discountPercent, active, type, usageType, validTill } = req.body;
+        const { discountPercent, minOrderAmount, active, type, usageType, validTill } = req.body;
         
         const updates = {
             discountPercent: Number(discountPercent),
+            minOrderAmount: Math.max(0, Number(minOrderAmount || 0)) || null,
             active: active !== false,
             type: type || 'public',
             usageType: usageType || 'unlimited',

@@ -46,7 +46,7 @@
                             <tr>
                                 <th>Image</th><th>Name</th><th>Category</th>
                                 <th>MRP</th><th>Sale Price</th><th>Stock</th>
-                                <th>NEW</th><th>Active</th><th>Actions</th>
+                                <th>Badge</th><th>Active</th><th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="productsBody"><tr><td colspan="9" class="table-empty">Loading...</td></tr></tbody>
@@ -103,15 +103,22 @@
                                 <button type="button" class="btn btn-outline" onclick="document.getElementById('imageUploadInput').click()">Browse Files</button>
                                 <div id="uploadStatus" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 12px; height: 16px;"></div>
                             </div>
-                            <!-- Hidden input to maintain compatibility or we just read from gallery -->
+                            <!-- Hidden textarea to store image URLs -->
+                            <textarea id="prodImages" style="display: none;"></textarea>
                             <div id="imageGallery" style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px;">
                                 <!-- Thumbnails will appear here -->
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="toggle-label">
-                                <input type="checkbox" id="prodIsNew"> Show NEW Badge
-                            </label>
+                            <label>Product Badge</label>
+                            <select id="prodBadgeType" class="form-input" onchange="toggleCustomBadgeInput()">
+                                <option value="none">No Badge</option>
+                                <option value="new">NEW</option>
+                                <option value="trending">Trending</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                            <input type="text" id="prodBadgeText" class="form-input" placeholder="Custom badge text" maxlength="18" style="display: none; margin-top: 8px;">
+                            <small class="text-muted">Only one badge can be used per product</small>
                         </div>
                         <div class="form-group">
                             <label class="toggle-label">
@@ -165,9 +172,29 @@
         </div>
     </div>
 
+    <!-- Delete Image Confirmation Modal -->
+    <div class="modal-overlay" id="deleteImageModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>Delete Image</h3>
+                <button class="modal-close" onclick="closeDeleteImageModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin: 0 0 16px; color: var(--text-muted); line-height: 1.5;">This will permanently delete the image from your R2 bucket.</p>
+                <div id="deleteImagePreview" style="width: 120px; height: 120px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); background: var(--bg-elevated); margin-bottom: 12px;"></div>
+                <div id="deleteImageStatus" style="min-height: 20px; font-size: 0.9rem; color: var(--text-muted);"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeDeleteImageModal()" id="cancelDeleteImageBtn">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteImage()" id="confirmDeleteImageBtn"><i class="fas fa-trash"></i> Delete</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/js/admin.js"></script>
     <script>
         let currentToken = '';
+        let pendingImageDeleteIndex = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             currentToken = localStorage.getItem('adminToken');
@@ -192,6 +219,26 @@
             document.getElementById('previewDiscount').textContent = `${disc}% OFF`;
         }
 
+        function getProductBadgeType(product) {
+            return product.productBadgeType || (product.isNew ? 'new' : 'none');
+        }
+
+        function getProductBadgeLabel(product) {
+            const type = getProductBadgeType(product);
+            if (type === 'new') return 'NEW';
+            if (type === 'trending') return 'Trending';
+            if (type === 'custom') return product.productBadgeText || 'Custom';
+            return 'None';
+        }
+
+        function toggleCustomBadgeInput() {
+            const type = document.getElementById('prodBadgeType').value;
+            const input = document.getElementById('prodBadgeText');
+            input.style.display = type === 'custom' ? 'block' : 'none';
+            input.required = type === 'custom';
+            if (type !== 'custom') input.value = '';
+        }
+
         async function loadProducts() {
             try {
                 const res = await fetch('/api/products');
@@ -209,11 +256,7 @@
                         <td class="text-muted"><s>₹${(p.originalPrice||0).toLocaleString('en-IN')}</s></td>
                         <td class="text-success"><strong>₹${(p.salePrice||0).toLocaleString('en-IN')}</strong></td>
                         <td>${p.stock || 0}</td>
-                        <td>
-                            <button class="toggle-btn ${p.isNew ? 'on' : ''}" onclick="toggleNew('${p.id}', this)" title="Toggle NEW badge">
-                                ${p.isNew ? 'ON' : 'OFF'}
-                            </button>
-                        </td>
+                        <td><span class="status-badge status-${getProductBadgeType(p) === 'none' ? 'created' : 'paid'}">${getProductBadgeLabel(p)}</span></td>
                         <td><span class="status-badge status-${p.active !== false ? 'paid' : 'failed'}">${p.active !== false ? 'Yes' : 'No'}</span></td>
                         <td>
                             <div class="action-btns">
@@ -235,6 +278,12 @@
                 document.getElementById('prodActive').checked = true;
                 document.getElementById('payMethodRazorpay').checked = true;
                 document.getElementById('payMethodCOD').checked = true;
+                document.getElementById('prodBadgeType').value = 'none';
+                document.getElementById('prodBadgeText').value = '';
+                toggleCustomBadgeInput();
+                document.getElementById('prodImages').value = '';
+                document.getElementById('uploadStatus').textContent = '';
+                renderGallery();
             }
         }
 
@@ -256,7 +305,10 @@
                 document.getElementById('prodSalePrice').value = p.salePrice;
                 document.getElementById('prodStock').value = p.stock || 0;
                 document.getElementById('prodImages').value = (p.images || []).join('\n');
-                document.getElementById('prodIsNew').checked = p.isNew || false;
+                renderGallery();
+                document.getElementById('prodBadgeType').value = getProductBadgeType(p);
+                document.getElementById('prodBadgeText').value = p.productBadgeText || '';
+                toggleCustomBadgeInput();
                 document.getElementById('prodActive').checked = p.active !== false;
 
                 // Set payment methods
@@ -300,6 +352,7 @@
                     status.innerHTML = '<i class="fas fa-check text-success"></i> Uploaded';
                     const textarea = document.getElementById('prodImages');
                     textarea.value = textarea.value ? textarea.value + '\n' + data.url : data.url;
+                    renderGallery();
                 } else {
                     status.innerHTML = `<i class="fas fa-times text-danger"></i> Failed: ${data.error}`;
                 }
@@ -308,6 +361,140 @@
                 status.innerHTML = '<i class="fas fa-times text-danger"></i> Error uploading';
             } finally {
                 event.target.value = ''; // reset file input
+            }
+        }
+
+        function renderGallery() {
+            const textarea = document.getElementById('prodImages');
+            const gallery = document.getElementById('imageGallery');
+            const images = textarea.value.split('\n').map(u => u.trim()).filter(u => u);
+            
+            gallery.innerHTML = images.map((url, index) => `
+                <div class="gallery-item" style="position: relative; width: 100px; height: 100px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border);">
+                    <img src="${url}" style="width: 100%; height: 100%; object-fit: cover;">
+                    <button type="button" onclick="openDeleteImageModal(${index})" style="position: absolute; top: 5px; right: 5px; background: rgba(239, 68, 68, 0.8); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function getCurrentImages() {
+            const textarea = document.getElementById('prodImages');
+            return textarea.value.split('\n').map(u => u.trim()).filter(u => u);
+        }
+
+        function setCurrentImages(images) {
+            const textarea = document.getElementById('prodImages');
+            textarea.value = images.join('\n');
+            renderGallery();
+        }
+
+        function extractR2ImageKey(url) {
+            if (!url) return '';
+            const value = url.trim();
+            if (value.startsWith('/api/fetch-image/')) {
+                return decodeURIComponent(value.substring('/api/fetch-image/'.length));
+            }
+            if (value.startsWith('images/')) {
+                return value;
+            }
+
+            try {
+                const parsedUrl = new URL(value, window.location.origin);
+                const fetchMatch = parsedUrl.pathname.match(/\/api\/fetch-image\/(.+)$/);
+                if (fetchMatch) return decodeURIComponent(fetchMatch[1]);
+
+                const imagePathMatch = parsedUrl.pathname.match(/\/(images\/.+)$/);
+                if (imagePathMatch) return decodeURIComponent(imagePathMatch[1]);
+
+                const queryKey = parsedUrl.searchParams.get('key');
+                if (queryKey && queryKey.startsWith('images/')) return queryKey;
+            } catch (error) {
+                console.error('Image key parse error:', error);
+            }
+
+            return '';
+        }
+
+        function openDeleteImageModal(index) {
+            const images = getCurrentImages();
+            const imageUrl = images[index];
+            pendingImageDeleteIndex = index;
+            document.getElementById('deleteImageStatus').textContent = '';
+            document.getElementById('confirmDeleteImageBtn').disabled = false;
+            document.getElementById('cancelDeleteImageBtn').disabled = false;
+            document.getElementById('deleteImagePreview').innerHTML = `<img src="${imageUrl}" alt="" style="width: 100%; height: 100%; object-fit: cover;">`;
+            document.getElementById('deleteImageModal').classList.add('active');
+        }
+
+        function closeDeleteImageModal() {
+            if (document.getElementById('confirmDeleteImageBtn').disabled) return;
+            pendingImageDeleteIndex = null;
+            document.getElementById('deleteImageModal').classList.remove('active');
+        }
+
+        async function syncProductImagesIfEditing(images) {
+            const id = document.getElementById('editProductId').value;
+            if (!id) return;
+
+            const res = await fetch(`/api/products/${id}/images`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentToken}`
+                },
+                body: JSON.stringify({ images })
+            });
+            const data = await res.json();
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to update product images');
+            }
+        }
+
+        async function confirmDeleteImage() {
+            const images = getCurrentImages();
+            const imageUrl = images[pendingImageDeleteIndex];
+            const key = extractR2ImageKey(imageUrl);
+            const status = document.getElementById('deleteImageStatus');
+            const confirmBtn = document.getElementById('confirmDeleteImageBtn');
+            const cancelBtn = document.getElementById('cancelDeleteImageBtn');
+
+            if (!key) {
+                status.textContent = 'Could not find the R2 key for this image.';
+                return;
+            }
+
+            confirmBtn.disabled = true;
+            cancelBtn.disabled = true;
+            status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting from R2...';
+
+            try {
+                const encodedKey = key.split('/').map(encodeURIComponent).join('/');
+                const deleteRes = await fetch(`/api/delete-image/${encodedKey}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const deleteData = await deleteRes.json();
+                if (!deleteData.success) {
+                    throw new Error(deleteData.error || 'Failed to delete image from R2');
+                }
+
+                const updatedImages = images.filter((_, index) => index !== pendingImageDeleteIndex);
+                await syncProductImagesIfEditing(updatedImages);
+                setCurrentImages(updatedImages);
+                if (window.geetaKalpImageCache) {
+                    window.geetaKalpImageCache.deleteImageUrl(imageUrl);
+                }
+                pendingImageDeleteIndex = null;
+                document.getElementById('deleteImageModal').classList.remove('active');
+                document.getElementById('uploadStatus').innerHTML = '<i class="fas fa-check text-success"></i> Image deleted';
+                loadProducts();
+            } catch (error) {
+                console.error('Delete image error:', error);
+                status.innerHTML = `<span class="text-danger">${error.message}</span>`;
+                confirmBtn.disabled = false;
+                cancelBtn.disabled = false;
             }
         }
 
@@ -327,7 +514,8 @@
                 category: document.getElementById('prodCategory').value,
                 stock: document.getElementById('prodStock').value,
                 images,
-                isNew: document.getElementById('prodIsNew').checked,
+                productBadgeType: document.getElementById('prodBadgeType').value,
+                productBadgeText: document.getElementById('prodBadgeText').value.trim(),
                 active: document.getElementById('prodActive').checked,
                 paymentMethods: {
                     razorpay: document.getElementById('payMethodRazorpay').checked,

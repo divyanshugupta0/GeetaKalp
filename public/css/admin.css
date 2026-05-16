@@ -230,19 +230,42 @@
     border-radius: var(--radius-sm); border: 1px solid var(--border);
 }
 
-/* ─── Admin Responsive ─── */
+/* ─── Admin Responsive & Smooth UI ─── */
+.admin-sidebar-close { display: none; }
+
 @media (max-width: 1024px) {
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .admin-content { padding: 24px; }
 }
 
 @media (max-width: 768px) {
     .admin-sidebar {
         position: fixed; transform: translateX(-100%);
+        box-shadow: var(--shadow-lg); z-index: 999;
+        transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.4s ease;
     }
-    .admin-sidebar.collapsed { transform: translateX(0); }
-    .admin-main { margin-left: 0; }
+    .admin-sidebar.active { transform: translateX(0); box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
+    .admin-main { margin-left: 0; width: 100%; transition: margin 0.4s ease; }
     .admin-content { padding: 20px 16px; }
-    .admin-header { padding: 16px; }
-    .stats-grid { grid-template-columns: 1fr; }
-    .modal { max-width: 95%; }
+    .admin-header { padding: 16px; gap: 12px; }
+    .stats-grid { grid-template-columns: 1fr; gap: 16px; }
+    .modal { max-width: 95%; margin: 0 10px; }
+    .section-header-bar { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .header-actions { width: 100%; justify-content: space-between; overflow-x: auto; padding-bottom: 4px; }
+    .admin-page-title { font-size: 1.1rem; }
+    .form-grid { grid-template-columns: 1fr; }
+    
+    /* Smooth Touch UI */
+    .btn-icon, .toggle-btn, .sidebar-link { padding: 12px; font-size: 0.95rem; }
+    .stat-card { transition: transform 0.3s ease; }
+    .stat-card:active { transform: scale(0.98); }
+    .admin-sidebar-close { display: block; background: transparent; border: none; font-size: 1.2rem; color: var(--text-muted); cursor: pointer; }
+}
+
+@media (max-width: 480px) {
+    .admin-login-card { padding: 32px 24px; margin: 20px; }
+    .stat-card { padding: 16px; flex-direction: column; text-align: center; gap: 12px; }
+    .header-actions { flex-direction: column; }
+    .header-actions .btn { width: 100%; justify-content: center; }
+    .admin-table th, .admin-table td { padding: 12px 10px; font-size: 0.8rem; }
 }
