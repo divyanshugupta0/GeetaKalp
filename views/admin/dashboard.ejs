@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/admin.css">
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = <%- JSON.stringify(firebaseConfig) %>;
+        if (firebaseConfig.apiKey && firebaseConfig.apiKey !== 'your_api_key_here') {
+            firebase.initializeApp(firebaseConfig);
+        }
+    </script>
+</head>
+<body class="admin-body">
+    <!-- Admin Sidebar -->
+    <%- include('../partials/admin-sidebar', { activePage: 'dashboard' }) %>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <header class="admin-header">
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h2 class="admin-page-title">Dashboard</h2>
+            <div class="admin-user" id="adminUser">
+                <i class="fas fa-user-circle"></i>
+                <span id="adminEmail">Admin</span>
+            </div>
+        </header>
+
+        <div class="admin-content">
+            <!-- Stats Cards -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-card-icon" style="background: linear-gradient(135deg, #6c3ce0, #a855f7);">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="stat-card-info">
+                        <span class="stat-card-value" id="statProducts">0</span>
+                        <span class="stat-card-label">Total Products</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon" style="background: linear-gradient(135deg, #0ea5e9, #38bdf8);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-card-info">
+                        <span class="stat-card-value" id="statActive">0</span>
+                        <span class="stat-card-label">Active Products</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="stat-card-info">
+                        <span class="stat-card-value" id="statOrders">0</span>
+                        <span class="stat-card-label">Total Orders</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                        <i class="fas fa-rupee-sign"></i>
+                    </div>
+                    <div class="stat-card-info">
+                        <span class="stat-card-value" id="statRevenue">₹0</span>
+                        <span class="stat-card-label">Total Revenue</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Orders -->
+            <div class="admin-section">
+                <div class="section-header-bar">
+                    <h3><i class="fas fa-clock"></i> Recent Orders</h3>
+                    <a href="/admin/orders" class="btn btn-sm btn-outline">View All</a>
+                </div>
+                <div class="table-wrap">
+                    <table class="admin-table" id="recentOrdersTable">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentOrdersBody">
+                            <tr>
+                                <td colspan="5" class="table-empty">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/admin.js"></script>
+    <script>
+        // Auth guard
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!localStorage.getItem('adminToken')) {
+                window.location.href = '/admin/login';
+            } else {
+                document.getElementById('adminEmail').textContent = localStorage.getItem('adminEmail') || 'Admin';
+                loadDashboard();
+            }
+        });
+
+        async function loadDashboard() {
+            try {
+                const token = localStorage.getItem('adminToken');
+                const res = await fetch('/api/stats', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('statProducts').textContent = data.stats.totalProducts;
+                    document.getElementById('statActive').textContent = data.stats.activeProducts;
+                    document.getElementById('statOrders').textContent = data.stats.totalOrders;
+                    document.getElementById('statRevenue').textContent = `₹${data.stats.totalRevenue.toLocaleString('en-IN')}`;
+                }
+
+                // Load recent orders
+                const ordersRes = await fetch('/api/orders', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const ordersData = await ordersRes.json();
+                if (ordersData.success) {
+                    const tbody = document.getElementById('recentOrdersBody');
+                    if (ordersData.orders.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="table-empty">No orders yet</td></tr>';
+                    } else {
+                        tbody.innerHTML = ordersData.orders.slice(0, 5).map(order => `
+                            <tr>
+                                <td><code>${order.id.substring(0, 10)}...</code></td>
+                                <td>${order.customerInfo?.name || 'N/A'}</td>
+                                <td>₹${(order.amount || 0).toLocaleString('en-IN')}</td>
+                                <td><span class="status-badge status-${order.status}">${order.status}</span></td>
+                                <td>${order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN') : 'N/A'}</td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Dashboard load error:', error);
+            }
+        }
+
+        // Sidebar toggle
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            document.getElementById('adminSidebar').classList.toggle('collapsed');
+        });
+
+        function adminLogout() {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminEmail');
+            window.location.href = '/admin/login';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Organic Ethereal | The Vernal Collection</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Eb+Garamond:ital,wght@0,400..800;1,400..800&amp;family=Plus+Jakarta+Sans:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-on-surface": "#ecf3e6",
+                        "surface-tint": "#006e1e",
+                        "on-tertiary": "#ffffff",
+                        "on-background": "#171d15",
+                        "tertiary": "#aa265b",
+                        "on-primary-fixed": "#002204",
+                        "surface-dim": "#d5dccf",
+                        "primary": "#006b1d",
+                        "background-dark": "#112115",
+                        "on-tertiary-fixed-variant": "#8d0846",
+                        "divider": "rgba(17, 33, 21, 0.1)",
+                        "inverse-surface": "#2b3229",
+                        "primary-fixed-dim": "#66df6c",
+                        "surface-bright": "#f4fcee",
+                        "on-error-container": "#93000a",
+                        "outline-variant": "#bdcab8",
+                        "inverse-primary": "#66df6c",
+                        "tertiary-fixed-dim": "#ffb1c5",
+                        "error": "#ba1a1a",
+                        "on-secondary-container": "#576959",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#ca4174",
+                        "on-tertiary-container": "#fffbff",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#516353",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#83fc86",
+                        "tertiary-fixed": "#ffd9e1",
+                        "glass-surface": "rgba(255, 255, 255, 0.8)",
+                        "on-tertiary-fixed": "#3f001b",
+                        "error-container": "#ffdad6",
+                        "surface-container-highest": "#dde5d8",
+                        "surface-variant": "#dde5d8",
+                        "surface-container": "#e9f0e3",
+                        "background": "#f4fcee",
+                        "glass-border": "rgba(255, 255, 255, 1.0)",
+                        "surface-container-high": "#e3eadd",
+                        "surface": "#f4fcee",
+                        "on-surface": "#171d15",
+                        "on-primary-fixed-variant": "#005315",
+                        "on-secondary-fixed-variant": "#3a4b3d",
+                        "background-light": "#f6f8f6",
+                        "secondary-fixed": "#d4e8d4",
+                        "secondary-fixed-dim": "#b8ccb9",
+                        "on-surface-variant": "#3e4a3c",
+                        "secondary-container": "#d4e8d4",
+                        "outline": "#6e7b6a",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#eff6e9",
+                        "primary-container": "#008727",
+                        "on-primary-container": "#f7fff1",
+                        "on-secondary-fixed": "#0f1f13",
+                        "lichen": "#8A9286"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-margin": "48px",
+                        "container-padding": "24px",
+                        "unit": "4px",
+                        "element-gap": "12px",
+                        "stack-gap": "32px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Eb Garamond"],
+                        "display-md": ["Eb Garamond"],
+                        "label-sm": ["Plus Jakarta Sans"],
+                        "label-caps": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "display-sm": ["Eb Garamond"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["36px", { "lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "display-md": ["30px", { "lineHeight": "1.2", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "1", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "display-sm": ["20px", { "lineHeight": "1.2", "fontWeight": "500" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background: linear-gradient(135deg, #d2ccc4 0%, #f4fcee 100%);
+            min-height: 100vh;
+        }
+        .fluid-mask-1 {
+            clip-path: circle(70% at 50% 50%);
+        }
+        .fluid-mask-2 {
+            clip-path: ellipse(45% 50% at 50% 50%);
+        }
+        .glass-badge {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="text-on-surface selection:bg-primary-fixed-dim selection:text-on-primary-fixed">
+<!-- TopNavBar -->
+<header class="bg-glass-surface/80 backdrop-blur-md font-display-sm text-display-sm tracking-wide border-b border-glass-border/20 shadow-sm fixed top-0 left-0 right-0 z-50">
+<div class="flex justify-between items-center w-full px-container-padding py-4 max-w-7xl mx-auto">
+<div class="font-display-md text-display-md text-primary italic">Organic Ethereal</div>
+<nav class="hidden md:flex gap-element-gap items-center">
+<a class="text-on-surface-variant/70 hover:text-primary transition-colors duration-300" href="#">Sanctuary</a>
+<a class="text-primary border-b border-primary/40 pb-1 hover:text-primary transition-colors duration-300" href="#">Apothecary</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant/70 hover:text-primary transition-colors duration-300">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+</button>
+<button class="text-on-surface-variant/70 hover:text-primary transition-colors duration-300">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</button>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-section-margin max-w-7xl mx-auto px-container-padding">
+<!-- Hero Section -->
+<section class="mb-stack-gap text-center md:text-left py-12 md:py-20 relative overflow-hidden">
+<div class="relative z-10 max-w-2xl">
+<span class="font-label-caps text-label-caps text-lichen uppercase tracking-[0.2em] mb-4 block">New Arrivals</span>
+<h1 class="font-display-lg text-[64px] leading-tight text-primary italic mb-6">The Vernal Collection</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-lg mb-8">
+                    A limited-edition curation inspired by the first light of spring. Experience the renewal of self through botanical alchemy and ritualistic simplicity.
+                </p>
+<button class="bg-primary text-on-primary rounded-full px-8 py-3 font-label-caps text-label-caps uppercase tracking-widest hover:opacity-90 transition-all duration-300">
+                    Explore Curations
+                </button>
+</div>
+<!-- Decorative Element -->
+<div class="absolute right-0 top-0 w-1/2 h-full hidden md:block">
+<img alt="Botanical Still Life" class="w-full h-full object-cover fluid-mask-1 opacity-80" data-alt="A high-end botanical still life featuring fresh green sprigs and soft sage leaves inside a translucent glass vase. The lighting is ethereal and high-key, casting delicate shadows against a warm clay and off-white background. The mood is serene, minimalist, and luxury-focused, echoing an organic apothecary aesthetic with soft focus and airy composition." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgjg1OGUpozgB-yFe7rIePt4Hc_j6dNgR7-tv_FT2Lu2XSF_JQw9rFAR0iHL-V8_oTOkILpkgeDROQT-HwOMN0v1ChM2n47WdjNzralPfb_vYQ3awafYa3wstcW1ayIAhi-PVEufkI3_DasyUfys7g7FMwxHntZsZo69_tyeNiHju3IAS0Rubz6ZA63ckZvqE4lSW_zhtfbX6H-6KOqbFvOQL6-fBPyFCgVgs86HUo36gkEqfFdq689M5n9TC3b6WX6yWw0pNuCNs"/>
+</div>
+</section>
+<!-- Asymmetric Product Grid -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-stack-gap">
+<!-- Product 1 (Large Column) -->
+<div class="md:col-span-7 flex flex-col gap-6">
+<div class="relative group overflow-hidden rounded-xl aspect-[4/5] bg-surface-container-low p-8 flex items-center justify-center">
+<div class="absolute top-6 left-6 z-20">
+<div class="glass-badge px-4 py-2 rounded-full font-label-caps text-label-caps text-primary uppercase">Seasonal Offer</div>
+</div>
+<img alt="Vernal Essence Oil" class="w-full h-full object-contain fluid-mask-2 group-hover:scale-105 transition-transform duration-700" data-alt="A minimalist product shot of a clear glass dropper bottle containing a pale green botanical oil. The bottle is placed on a smooth, circular stone pedestal. The lighting is soft and diffused, creating a glassmorphic effect with gentle highlights. The background consists of a subtle clay-to-sage gradient that enhances the ethereal and organic feeling of the wellness brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3NudmmbyRECdaZ2xwx0swyViaaQi8ZEaRh1fY3xTRHvSxIz5qbZp9wkEOP6JLuLnckgwMUvvH17qAoZW2nBU33dH5EprTdEGmYbIw8G0bojFOfLJYAjBTvX5zYZVK1fkQUc7FJkRw8UMMYLXhYz4htKe9sOd08OFrGcVsK_gk60tk4xrQOI_0AsopB0D5mf8eVlr59G2fNdOae6mAxE3U_PMmT7-xxYwhawcO2O25e-FM8fiXI5OdLCRNF373nA70sI4ICm7qgIc"/>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-display-md text-display-md text-on-surface">Vernal Essence Oil</h3>
+<p class="font-label-sm text-label-sm text-lichen uppercase tracking-widest mt-1">Limited Release</p>
+</div>
+<span class="font-display-sm text-display-sm text-primary">$84.00</span>
+</div>
+</div>
+<!-- Product 2 (Small Column) -->
+<div class="md:col-span-5 flex flex-col gap-6 pt-0 md:pt-24">
+<div class="relative group overflow-hidden rounded-xl aspect-square bg-surface-container-low p-8 flex items-center justify-center">
+<img alt="Clay Ritual Mask" class="w-full h-full object-contain fluid-mask-1 group-hover:scale-105 transition-transform duration-700" data-alt="A luxurious ceramic jar with a minimalist label sitting amidst soft white sand and a single eucalyptus branch. The lighting is bright and airy, emphasizing the clean lines and premium materials. The scene is shot in a high-key style with a palette of soft sage, lichen, and warm clay, creating a tranquil and ritualistic mood for a luxury beauty brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAo1Ck0OI8aBaOVBBqhgFb0ETTP3LgQOjBk-0actqp4GtUv9ttEHFk9I3gUcsQqFdL0mvJuUPShPBxLVyyWAiDHO2YHyWR6Ed0CaJpHI-LyBSq5OALv8zl72VB2WfUZdW4w_XvbBVrqsN0SDiI3wVh7g9QfSs64210eCqkTuWGeYLL62ENZPKxBQDv4OOeugX4lnV3XxutjeYm26hxAUvv-ou9GQ_Oldx996FGPDc3vKOlb1GFNAjWZx4uyU6cJrwn5ZGJ8KgwrXo"/>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-display-sm text-display-sm text-on-surface">Clay Ritual Mask</h3>
+<p class="font-label-sm text-label-sm text-lichen uppercase tracking-widest mt-1">Restorative</p>
+</div>
+<span class="font-display-sm text-display-sm text-primary">$62.00</span>
+</div>
+</div>
+<!-- Product 3 (Small Column) -->
+<div class="md:col-span-5 flex flex-col gap-6">
+<div class="relative group overflow-hidden rounded-xl aspect-[3/4] bg-surface-container-low p-8 flex items-center justify-center">
+<div class="absolute top-6 left-6 z-20">
+<div class="glass-badge px-4 py-2 rounded-full font-label-caps text-label-caps text-primary uppercase">New Arrival</div>
+</div>
+<img alt="Ethereal Mist" class="w-full h-full object-contain fluid-mask-2 group-hover:scale-105 transition-transform duration-700" data-alt="A frosted glass spray bottle with a minimalist label, appearing to float in a space filled with soft morning mist. Gentle beams of light filter through, creating a weightless and ethereal atmosphere. The color palette is dominated by muted lichen greens and translucent whites, conveying a sense of purity and premium botanical wellness." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbfGROx63PNH9GvntWyVUKxQTEILvr6q2h6mT2-HGPpkMMotHjs5-BOlqOfYke9GjLGiVaDm0gkYKPB5RHwlpN1VfobIIVWZV85JMLJ13iZkeCV1EfGo5layasEElS_uprSgVnreLXf6Fg0bQ3cbYn3UGfutw7HHAw-sGJMiVhJr70H286E6B4gvODF5wyqfFOtAvhmeiXcxEjVhQTh3U89-jqPDKVaZiCo3jvuBscHMVMuSvcbn-j-2Sf4h74Vun2CjdtedRqp-U"/>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-display-sm text-display-sm text-on-surface">Ethereal Mist</h3>
+<p class="font-label-sm text-label-sm text-lichen uppercase tracking-widest mt-1">Hydrating</p>
+</div>
+<span class="font-display-sm text-display-sm text-primary">$48.00</span>
+</div>
+</div>
+<!-- Product 4 (Large Column) -->
+<div class="md:col-span-7 flex flex-col gap-6 -mt-0 md:-mt-24">
+<div class="relative group overflow-hidden rounded-xl aspect-video bg-surface-container-low p-12 flex items-center justify-center">
+<img alt="The Sanctuary Set" class="w-full h-full object-contain fluid-mask-1 group-hover:scale-105 transition-transform duration-700" data-alt="A premium wellness gift set arranged artfully on a light-colored linen cloth. The set includes a glass bottle, a small ceramic bowl, and a bundle of dried lavender. The lighting is soft and lateral, highlighting the textures of the stone, glass, and fabric. The overall aesthetic is one of calm, luxury, and intentional living, using a botanical green and clay color story." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0OD2PQsax4xVA12pzIWUFT-UiWfdq-EknUZlj6tqkdiWeDRY9lhL0KU8HpVlsgDoQm1syY86P5lfHzfEwI5BpPXZeMMN_pWCcoihViADUaDOhdFxGXncSyh_Mcy-IKcAuAd6_b9mq2Ncw8FY-tX7Llr2CLbjuIssn0P5CARUO7sB54wvCesAJEuRLCSV5tMuuIMYPKw2d1B550BzQG8xXZ9JZrE8N3ZjoY_08jYLIrNykrnirGRZdMffuR9IoUlc1IPrs6iUAHiU"/>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-display-md text-display-md text-on-surface">The Sanctuary Set</h3>
+<p class="font-label-sm text-label-sm text-lichen uppercase tracking-widest mt-1">Seasonal Collection</p>
+</div>
+<div class="text-right">
+<span class="font-display-sm text-display-sm text-on-surface-variant line-through opacity-40 block">$120.00</span>
+<span class="font-display-sm text-display-sm text-primary">$95.00</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Newsletter / Ritual Invite -->
+<section class="mt-section-margin py-stack-gap bg-glass-surface/40 backdrop-blur-lg rounded-xl border border-glass-border/30 text-center px-6">
+<h2 class="font-display-md text-display-md text-primary mb-4 italic">Join the Vernal Ritual</h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md mx-auto mb-8">Receive early access to seasonal curations and ethereal wellness insights.</p>
+<form class="flex flex-col md:flex-row gap-element-gap max-w-lg mx-auto">
+<input class="flex-1 bg-white/50 border-lichen/20 rounded-full px-6 py-3 focus:ring-primary focus:border-primary placeholder:text-on-surface-variant/40" placeholder="Your essence (Email)" type="email"/>
+<button class="bg-secondary text-on-secondary rounded-full px-8 py-3 font-label-caps text-label-caps uppercase tracking-widest hover:opacity-90 transition-all" type="submit">
+                    Subscribe
+                </button>
+</form>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest font-label-sm text-label-sm uppercase tracking-[0.2em] font-light border-t border-divider py-stack-gap">
+<div class="flex flex-col md:flex-row justify-between items-center px-container-padding gap-element-gap max-w-7xl mx-auto">
+<div class="font-display-sm text-display-sm text-on-surface italic">Organic Ethereal</div>
+<div class="flex gap-8 text-on-surface-variant/50">
+<a class="hover:text-primary transition-opacity" href="#">Sustainability</a>
+<a class="hover:text-primary transition-opacity" href="#">Shipping</a>
+<a class="hover:text-primary transition-opacity" href="#">Returns</a>
+<a class="hover:text-primary transition-opacity" href="#">Privacy</a>
+</div>
+<div class="text-on-surface-variant/50">© 2024 Organic Ethereal. Crafted for Ritual.</div>
+</div>
+</footer>
+</body></html>

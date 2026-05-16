@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/admin.css">
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = <%- JSON.stringify(firebaseConfig) %>;
+        if (firebaseConfig.apiKey && firebaseConfig.apiKey !== 'your_api_key_here') {
+            firebase.initializeApp(firebaseConfig);
+        }
+    </script>
+</head>
+<body class="admin-body">
+    <div class="admin-login-container">
+        <div class="admin-login-card">
+            <div class="admin-login-header">
+                <div class="admin-logo">
+                    <span class="logo-icon">✦</span>
+                    <span class="logo-text">Geeta Kalp</span>
+                </div>
+                <h1>Admin Portal</h1>
+                <p>Sign in to manage your store</p>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="adminEmail"><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="adminEmail" required placeholder="admin@geetakalp.com" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword"><i class="fas fa-lock"></i> Password</label>
+                    <div class="password-wrap">
+                        <input type="password" id="adminPassword" required placeholder="Enter password" class="form-input">
+                        <button type="button" class="password-toggle" onclick="togglePassword()">
+                            <i class="fas fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="login-error" id="loginError" style="display: none;"></div>
+                <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+            </form>
+
+            <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Store</a>
+        </div>
+    </div>
+
+    <script>
+        // Check if already logged in
+        if (localStorage.getItem('adminToken')) {
+            window.location.href = '/admin';
+        }
+
+        function togglePassword() {
+            const pw = document.getElementById('adminPassword');
+            const icon = document.getElementById('eyeIcon');
+            if (pw.type === 'password') {
+                pw.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                pw.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const errorEl = document.getElementById('loginError');
+            errorEl.style.display = 'none';
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+
+            const email = document.getElementById('adminEmail').value.trim();
+            const password = document.getElementById('adminPassword').value.trim();
+
+            try {
+                if (typeof firebase === 'undefined' || !firebase.apps.length) {
+                    throw new Error('Firebase not configured. Please set up Firebase credentials.');
+                }
+                
+                const snapshot = await firebase.database().ref('adminCred').once('value');
+                const creds = snapshot.val();
+                
+                if (creds && creds.email === email && creds.password === password) {
+                    localStorage.setItem('adminToken', 'admin_session');
+                    localStorage.setItem('adminEmail', email);
+                    window.location.href = '/admin';
+                } else {
+                    throw new Error('Invalid email or password. Please check your credentials.');
+                }
+            } catch (error) {
+                errorEl.textContent = error.message;
+                errorEl.style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+            }
+        }
+    </script>
+</body>
+</html>

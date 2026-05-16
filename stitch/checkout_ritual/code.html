@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Eb+Garamond:ital,wght@0,400..800;1,400..800&amp;family=Plus+Jakarta+Sans:wght@200..800&amp;family=Jost:wght@300;400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-on-surface": "#ecf3e6",
+                    "surface-tint": "#006e1e",
+                    "on-tertiary": "#ffffff",
+                    "on-background": "#171d15",
+                    "tertiary": "#aa265b",
+                    "on-primary-fixed": "#002204",
+                    "surface-dim": "#d5dccf",
+                    "primary": "#006b1d",
+                    "background-dark": "#112115",
+                    "on-tertiary-fixed-variant": "#8d0846",
+                    "divider": "rgba(17, 33, 21, 0.1)",
+                    "inverse-surface": "#2b3229",
+                    "primary-fixed-dim": "#66df6c",
+                    "surface-bright": "#f4fcee",
+                    "on-error-container": "#93000a",
+                    "outline-variant": "#bdcab8",
+                    "inverse-primary": "#66df6c",
+                    "tertiary-fixed-dim": "#ffb1c5",
+                    "error": "#ba1a1a",
+                    "on-secondary-container": "#576959",
+                    "on-secondary": "#ffffff",
+                    "tertiary-container": "#ca4174",
+                    "on-tertiary-container": "#fffbff",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary": "#516353",
+                    "on-primary": "#ffffff",
+                    "primary-fixed": "#83fc86",
+                    "tertiary-fixed": "#ffd9e1",
+                    "glass-surface": "rgba(255, 255, 255, 0.8)",
+                    "on-tertiary-fixed": "#3f001b",
+                    "error-container": "#ffdad6",
+                    "surface-container-highest": "#dde5d8",
+                    "surface-variant": "#dde5d8",
+                    "surface-container": "#e9f0e3",
+                    "background": "#f4fcee",
+                    "glass-border": "rgba(255, 255, 255, 1.0)",
+                    "surface-container-high": "#e3eadd",
+                    "surface": "#f4fcee",
+                    "on-surface": "#171d15",
+                    "on-primary-fixed-variant": "#005315",
+                    "on-secondary-fixed-variant": "#3a4b3d",
+                    "background-light": "#f6f8f6",
+                    "secondary-fixed": "#d4e8d4",
+                    "secondary-fixed-dim": "#b8ccb9",
+                    "on-surface-variant": "#3e4a3c",
+                    "secondary-container": "#d4e8d4",
+                    "outline": "#6e7b6a",
+                    "on-error": "#ffffff",
+                    "surface-container-low": "#eff6e9",
+                    "primary-container": "#008727",
+                    "on-primary-container": "#f7fff1",
+                    "on-secondary-fixed": "#0f1f13"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "section-margin": "48px",
+                    "container-padding": "24px",
+                    "unit": "4px",
+                    "element-gap": "12px",
+                    "stack-gap": "32px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Eb Garamond"],
+                    "display-md": ["Eb Garamond"],
+                    "label-sm": ["Plus Jakarta Sans"],
+                    "label-caps": ["Plus Jakarta Sans"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "display-sm": ["Eb Garamond"],
+                    "jost": ["Jost", "sans-serif"]
+            },
+            "fontSize": {
+                    "display-lg": ["36px", {"lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "display-md": ["30px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                    "label-sm": ["12px", {"lineHeight": "1", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "500"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "display-sm": ["20px", {"lineHeight": "1.2", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background: radial-gradient(circle at center, #fdfdfb 0%, #f4f5f0 100%);
+            min-height: 100vh;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-checkout {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .fluid-mask {
+            mask-image: radial-gradient(circle, black 60%, transparent 100%);
+        }
+        .jost-thin { font-family: 'Jost', sans-serif; font-weight: 300; }
+    </style>
+</head>
+<body class="text-on-surface font-body-md antialiased overflow-x-hidden">
+<!-- Top Navigation (Minimized for Checkout) -->
+<header class="fixed top-0 left-0 w-full z-50 px-container-padding py-6 flex justify-between items-center bg-white/10 backdrop-blur-sm border-b border-white/20">
+<div class="font-display-md text-display-md text-primary italic">Organic Ethereal</div>
+<a class="flex items-center gap-2 text-on-surface-variant/70 font-label-caps uppercase tracking-widest text-label-sm hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+            Return to Sanctuary
+        </a>
+</header>
+<main class="min-h-screen flex items-center justify-center pt-24 pb-12 px-container-padding">
+<!-- Floating Checkout Modal -->
+<div class="glass-checkout w-full max-w-5xl rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
+<!-- Left Side: Shipping & Contact -->
+<div class="w-full md:w-3/5 p-8 md:p-12 border-r border-white/30">
+<div class="mb-stack-gap">
+<h1 class="font-display-lg text-display-lg mb-2">The Ritual Detail</h1>
+<p class="jost-thin text-secondary/70 text-lg">Enter the coordinates for your botanical delivery.</p>
+</div>
+<form class="space-y-6">
+<div class="space-y-2">
+<label class="font-label-caps text-label-sm text-secondary uppercase tracking-widest">Soul Identity</label>
+<input class="w-full bg-white/20 border-white/40 focus:ring-primary focus:border-primary rounded-lg py-3 px-4 jost-thin placeholder:text-secondary/40 transition-all" placeholder="Full Name" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="font-label-caps text-label-sm text-secondary uppercase tracking-widest">Communion Method</label>
+<input class="w-full bg-white/20 border-white/40 focus:ring-primary focus:border-primary rounded-lg py-3 px-4 jost-thin placeholder:text-secondary/40 transition-all" placeholder="Email Address" type="email"/>
+</div>
+<div class="space-y-2">
+<label class="font-label-caps text-label-sm text-secondary uppercase tracking-widest">Sanctuary Location</label>
+<input class="w-full bg-white/20 border-white/40 focus:ring-primary focus:border-primary rounded-lg py-3 px-4 jost-thin placeholder:text-secondary/40 transition-all" placeholder="Street Address" type="text"/>
+<div class="grid grid-cols-2 gap-4 mt-4">
+<input class="w-full bg-white/20 border-white/40 focus:ring-primary focus:border-primary rounded-lg py-3 px-4 jost-thin placeholder:text-secondary/40 transition-all" placeholder="City" type="text"/>
+<input class="w-full bg-white/20 border-white/40 focus:ring-primary focus:border-primary rounded-lg py-3 px-4 jost-thin placeholder:text-secondary/40 transition-all" placeholder="Postal Code" type="text"/>
+</div>
+</div>
+<div class="pt-6">
+<div class="flex items-center gap-3">
+<input class="rounded border-white/40 text-primary focus:ring-primary bg-white/20" id="save" type="checkbox"/>
+<label class="jost-thin text-secondary/80" for="save">Remember this ritual for future essences.</label>
+</div>
+</div>
+</form>
+</div>
+<!-- Right Side: Order Summary -->
+<div class="w-full md:w-2/5 p-8 md:p-12 bg-white/10 flex flex-col justify-between">
+<div>
+<h2 class="font-display-sm text-display-sm mb-stack-gap">Your Selection</h2>
+<div class="space-y-6">
+<!-- Product Item 1 -->
+<div class="flex items-center gap-4">
+<div class="relative w-20 h-20 flex-shrink-0">
+<img class="w-full h-full object-cover rounded-full border border-primary/5 fluid-mask" data-alt="A high-end apothecary bottle with a minimalist label resting on a soft green linen surface. The lighting is ethereal and high-key, highlighting the clarity of the glass. Soft-focus botanical elements create a serene, wellness-focused atmosphere in a modern sage and white color palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCMhiq_L3onK-U6GV9dMA8OznPyskPadSeumkbhEUmBedstqc8QHKda4EP3SG7Vxw4oBhVYaL9eRgpp7tBTW1FqExKHa9drdRqiBcuhUeTbZu7vklORgEAe75L_zJYULdQzy__Ym3GAe7vYdKW81xHec_M6m-hdGdr6f9tOSlBpO7MS42gSYWxkd5sYLRBTUj7f3gf2mQYz-VCFxQpg4ZqeYto62SyU-hOFnRQqND-sIZd-RUUNcM1OK2tUD5VRL6-Wrvf71KMfvI"/>
+</div>
+<div class="flex-1">
+<p class="font-label-sm text-on-surface uppercase tracking-wider">Verdant Mist</p>
+<p class="jost-thin text-sm text-secondary/60">30ml Essence</p>
+</div>
+<div class="jost-thin text-lg">$78.00</div>
+</div>
+<!-- Product Item 2 -->
+<div class="flex items-center gap-4">
+<div class="relative w-20 h-20 flex-shrink-0">
+<img class="w-full h-full object-cover rounded-full border border-primary/5 fluid-mask" data-alt="A circular clay bowl containing premium botanical facial powder. The texture is fine and earthy, set against a bright, airy background with soft shadows. The image captures a sense of weightlessness and organic luxury, using sage green and alabaster sand tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPCMvCk8JIFPTfzY6HVGtenKS4kUA3p16nEg5LuN58IPg4nhpM52EhDnC3Sn953aRDgAy4BKmtx95kvew3y1d2ZKuazGwjsrfhrXH_WfMxBGacNkVgWbVHlvr8_7FiQQqCCpMHHuH4hZgw-XS8IVENJbsnfGdBOjS-lxbWzJtJjAv6XrW3UPOyRLmgvRU5HrjB0VT40_Ah7x0DXPghRzYfpZOZBeSkO8eTgytiWOY3mRgdYLajAPidpK35z1EDpAgSGmE9Lmp-asM"/>
+</div>
+<div class="flex-1">
+<p class="font-label-sm text-on-surface uppercase tracking-wider">Ethereal Clay</p>
+<p class="jost-thin text-sm text-secondary/60">120g Ritual</p>
+</div>
+<div class="jost-thin text-lg">$54.00</div>
+</div>
+</div>
+<div class="mt-stack-gap pt-stack-gap border-t border-white/20 space-y-3">
+<div class="flex justify-between jost-thin">
+<span>Manifestation Cost</span>
+<span>$132.00</span>
+</div>
+<div class="flex justify-between jost-thin">
+<span>Shipping Energy</span>
+<span>$12.00</span>
+</div>
+<div class="flex justify-between font-display-sm text-display-sm pt-2">
+<span>Total Obligation</span>
+<span>$144.00</span>
+</div>
+</div>
+</div>
+<div class="mt-stack-gap">
+<button class="w-full bg-[#4A5D4E] text-white rounded-full py-5 px-8 font-label-caps text-label-sm uppercase tracking-[0.25em] hover:bg-[#3d4d41] transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg">
+                        Finalize Ritual
+                    </button>
+<p class="text-center mt-6 jost-thin text-xs text-secondary/40 uppercase tracking-widest">
+                        Secured by Ethereal Encryption
+                    </p>
+</div>
+</div>
+</div>
+</main>
+<footer class="w-full py-8 px-container-padding flex flex-col md:flex-row justify-between items-center text-on-surface-variant/40">
+<div class="font-label-sm text-label-sm uppercase tracking-widest mb-4 md:mb-0">
+            © 2024 Organic Ethereal. Crafted for Ritual.
+        </div>
+<div class="flex gap-8 font-label-sm text-label-sm uppercase tracking-widest">
+<a class="hover:text-primary transition-colors" href="#">Sustainability</a>
+<a class="hover:text-primary transition-colors" href="#">Privacy</a>
+</div>
+</footer>
+</body></html>

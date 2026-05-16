@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Plus+Jakarta+Sans:wght@200..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+    <!-- Admin Sidebar -->
+    <%- include('../partials/admin-sidebar', { activePage: 'settings' }) %>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <header class="admin-header">
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h2 class="admin-page-title">Store Settings</h2>
+            <div class="admin-user" id="adminUser">
+                <i class="fas fa-user-circle"></i>
+                <span id="adminEmail">Admin</span>
+            </div>
+        </header>
+
+        <div class="admin-content">
+            <div class="admin-section" style="max-width: 600px;">
+                <div class="section-header-bar">
+                    <h3><i class="fas fa-credit-card"></i> Payment Methods</h3>
+                </div>
+                <div style="padding: 24px;">
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <label class="toggle-label" style="display: flex; justify-content: space-between; padding: 16px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <i class="fas fa-wallet" style="font-size: 1.5rem; color: var(--primary);"></i>
+                                <div>
+                                    <div style="font-weight: 600;">Razorpay (Online Payment)</div>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 400;">Accept UPI, Cards, NetBanking</div>
+                                </div>
+                            </div>
+                            <input type="checkbox" id="toggleRazorpay" style="width: 24px; height: 24px;">
+                        </label>
+                        
+                        <label class="toggle-label" style="display: flex; justify-content: space-between; padding: 16px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <i class="fas fa-money-bill-wave" style="font-size: 1.5rem; color: var(--primary);"></i>
+                                <div>
+                                    <div style="font-weight: 600;">Cash on Delivery (COD)</div>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 400;">Allow customers to pay upon delivery</div>
+                                </div>
+                            </div>
+                            <input type="checkbox" id="toggleCOD" style="width: 24px; height: 24px;" onchange="toggleCodSettings()">
+                        </label>
+                        
+                        <div id="codSettingsPanel" style="padding: 16px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-top: -12px; display: none;">
+                            <div class="form-group">
+                                <label style="font-weight: 600; display: block; margin-bottom: 8px;">Advance Payment Percentage (%)</label>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Require customers to pay a percentage online to place a COD order. Set to 0 for 100% COD.</div>
+                                <input type="number" id="codAdvancePercent" class="form-input" min="0" max="100" value="0">
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" style="margin-top: 16px;" onclick="saveSettings()" id="saveBtn">Save Settings</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentToken = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            currentToken = localStorage.getItem('adminToken');
+            if (!currentToken) {
+                window.location.href = '/admin/login';
+                return;
+            }
+            document.getElementById('adminEmail').textContent = localStorage.getItem('adminEmail') || 'Admin';
+            loadSettings();
+        });
+
+        function toggleCodSettings() {
+            const isEnabled = document.getElementById('toggleCOD').checked;
+            document.getElementById('codSettingsPanel').style.display = isEnabled ? 'block' : 'none';
+        }
+
+        async function loadSettings() {
+            try {
+                const res = await fetch('/api/settings', {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const data = await res.json();
+                if (data.success && data.settings && data.settings.paymentMethods) {
+                    document.getElementById('toggleRazorpay').checked = data.settings.paymentMethods.razorpay !== false;
+                    document.getElementById('toggleCOD').checked = data.settings.paymentMethods.cod !== false;
+                    document.getElementById('codAdvancePercent').value = data.settings.paymentMethods.codAdvancePercent || 0;
+                } else {
+                    // Defaults
+                    document.getElementById('toggleRazorpay').checked = true;
+                    document.getElementById('toggleCOD').checked = true;
+                    document.getElementById('codAdvancePercent').value = 0;
+                }
+                toggleCodSettings();
+            } catch (error) {
+                console.error('Failed to load settings', error);
+            }
+        }
+
+        async function saveSettings() {
+            const btn = document.getElementById('saveBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            btn.disabled = true;
+
+            const settings = {
+                paymentMethods: {
+                    razorpay: document.getElementById('toggleRazorpay').checked,
+                    cod: document.getElementById('toggleCOD').checked,
+                    codAdvancePercent: parseInt(document.getElementById('codAdvancePercent').value) || 0
+                }
+            };
+
+            try {
+                const res = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}` 
+                    },
+                    body: JSON.stringify(settings)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    btn.innerHTML = '<i class="fas fa-check"></i> Saved';
+                    setTimeout(() => {
+                        btn.innerHTML = 'Save Settings';
+                        btn.disabled = false;
+                    }, 2000);
+                } else {
+                    alert('Error saving settings');
+                    btn.innerHTML = 'Save Settings';
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                console.error(error);
+                btn.innerHTML = 'Save Settings';
+                btn.disabled = false;
+            }
+        }
+
+        function adminLogout() {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminEmail');
+            window.location.href = '/admin/login';
+        }
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            document.getElementById('adminSidebar').classList.toggle('collapsed');
+        });
+    </script>
+</body>
+</html>

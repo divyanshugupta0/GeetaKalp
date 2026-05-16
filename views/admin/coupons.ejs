@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Plus+Jakarta+Sans:wght@200..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+    <!-- Admin Sidebar -->
+    <%- include('../partials/admin-sidebar', { activePage: 'coupons' }) %>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <header class="admin-header">
+            <button class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+            <h2 class="admin-page-title">Discount Coupons</h2>
+            <button class="btn btn-primary btn-sm" onclick="openCouponModal()"><i class="fas fa-plus"></i> Create Coupon</button>
+            <div class="admin-user" id="adminUser">
+                <i class="fas fa-user-circle"></i>
+                <span id="adminEmail">Admin</span>
+            </div>
+        </header>
+
+        <div class="admin-content">
+            <div class="admin-section">
+                <div class="section-header-bar">
+                    <h3><i class="fas fa-ticket-alt"></i> Active Coupons</h3>
+                </div>
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Coupon Code</th>
+                                <th>Discount</th>
+                                <th>Type / Usage</th>
+                                <th>Status</th>
+                                <th>Created Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="couponsBody">
+                            <tr><td colspan="6" class="table-empty">Loading coupons...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Coupon Modal -->
+    <div class="modal-overlay" id="couponModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3 id="modalTitle">Create Coupon</h3>
+                <button class="modal-close" onclick="closeCouponModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="couponForm" onsubmit="saveCoupon(event)">
+                <input type="hidden" id="editCouponId">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Coupon Code *</label>
+                        <input type="text" id="couponCode" required class="form-input" placeholder="e.g. SUMMER50" style="text-transform: uppercase;">
+                        <small class="text-muted">Customers will enter this at checkout</small>
+                    </div>
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label>Discount Percentage (%) *</label>
+                        <input type="number" id="couponDiscount" required class="form-input" placeholder="e.g. 15" min="1" max="100">
+                    </div>
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label>Coupon Type</label>
+                        <select id="couponType" class="form-input">
+                            <option value="public">Public (Visible to everyone)</option>
+                            <option value="private">Private (Hidden, requires code)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label>Usage Limit</label>
+                        <select id="couponUsageType" class="form-input">
+                            <option value="unlimited">Unlimited Uses</option>
+                            <option value="per_user_single">One-Time Use (Per User)</option>
+                            <option value="global_single">One-Time Use (Globally - First Come First Serve)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label>Valid Till (Optional)</label>
+                        <input type="datetime-local" id="couponValidTill" class="form-input">
+                    </div>
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label class="toggle-label" style="display: flex; gap: 8px; align-items: center;">
+                            <input type="checkbox" id="couponActive" checked>
+                            Active
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeCouponModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveCouponBtn">Save Coupon</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentToken = '';
+        let allCouponsData = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            currentToken = localStorage.getItem('adminToken');
+            if (!currentToken) {
+                window.location.href = '/admin/login';
+                return;
+            }
+            document.getElementById('adminEmail').textContent = localStorage.getItem('adminEmail') || 'Admin';
+            loadCoupons();
+        });
+
+        async function loadCoupons() {
+            try {
+                const res = await fetch('/api/coupons', {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const data = await res.json();
+                const tbody = document.getElementById('couponsBody');
+                if (data.success) {
+                    allCouponsData = data.coupons;
+                    if (allCouponsData.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No coupons found. Create your first coupon!</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = allCouponsData.map(c => {
+                        const expired = c.validTill && new Date(c.validTill).getTime() < Date.now();
+                        return `
+                        <tr>
+                            <td>
+                                <span style="font-family: monospace; font-size: 1.1rem; font-weight: 600; padding: 4px 8px; background: var(--bg-elevated); border-radius: var(--radius-sm);">${c.code}</span>
+                                ${expired ? '<span class="badge badge-danger" style="margin-left: 8px;">Expired</span>' : ''}
+                            </td>
+                            <td style="font-weight: 600; color: var(--success);">${c.discountPercent}% OFF</td>
+                            <td>
+                                <div style="font-size: 0.8rem; text-transform: uppercase; margin-bottom: 4px; color: ${c.type==='private' ? 'var(--accent)' : 'var(--primary-light)'}">${c.type || 'public'}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">
+                                    ${c.usageType === 'global_single' ? `Global Single (Used: ${c.usedCount || 0})` : 
+                                      c.usageType === 'per_user_single' ? `Per User Single (Used: ${c.usedCount || 0})` : 'Unlimited'}
+                                </div>
+                            </td>
+                            <td>
+                                <button class="toggle-btn ${c.active ? 'on' : ''}" onclick="toggleCouponStatus('${c.id}', ${c.active})">
+                                    ${c.active ? 'Active' : 'Disabled'}
+                                </button>
+                            </td>
+                            <td>
+                                ${c.validTill ? new Date(c.validTill).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short'}) : 'Never expires'}
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn-icon btn-primary" onclick="editCoupon('${c.id}')" title="Edit Coupon">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn-icon btn-danger" onclick="deleteCoupon('${c.id}', '${c.code}')" title="Delete Coupon">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `}).join('');
+                }
+            } catch (error) {
+                console.error('Failed to load coupons', error);
+            }
+        }
+
+        function openCouponModal() {
+            document.getElementById('couponModal').classList.add('active');
+            document.getElementById('couponForm').reset();
+            document.getElementById('editCouponId').value = '';
+            document.getElementById('modalTitle').textContent = 'Create Coupon';
+            document.getElementById('couponCode').disabled = false;
+        }
+
+        function closeCouponModal() {
+            document.getElementById('couponModal').classList.remove('active');
+        }
+
+        function editCoupon(id) {
+            const coupon = allCouponsData.find(c => c.id === id);
+            if (!coupon) return;
+            
+            document.getElementById('couponModal').classList.add('active');
+            document.getElementById('modalTitle').textContent = 'Edit Coupon';
+            document.getElementById('editCouponId').value = coupon.id;
+            
+            document.getElementById('couponCode').value = coupon.code;
+            document.getElementById('couponCode').disabled = true; // Code shouldn't change
+            document.getElementById('couponDiscount').value = coupon.discountPercent;
+            document.getElementById('couponType').value = coupon.type || 'public';
+            document.getElementById('couponUsageType').value = coupon.usageType || 'unlimited';
+            document.getElementById('couponActive').checked = coupon.active !== false;
+            
+            if (coupon.validTill) {
+                const dt = new Date(coupon.validTill);
+                const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(dt - tzoffset)).toISOString().slice(0, 16);
+                document.getElementById('couponValidTill').value = localISOTime;
+            } else {
+                document.getElementById('couponValidTill').value = '';
+            }
+        }
+
+        async function saveCoupon(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveCouponBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            const editId = document.getElementById('editCouponId').value;
+            const validTillVal = document.getElementById('couponValidTill').value;
+
+            const payload = {
+                code: document.getElementById('couponCode').value.toUpperCase(),
+                discountPercent: parseInt(document.getElementById('couponDiscount').value),
+                active: document.getElementById('couponActive').checked,
+                type: document.getElementById('couponType').value,
+                usageType: document.getElementById('couponUsageType').value,
+                validTill: validTillVal ? new Date(validTillVal).toISOString() : null
+            };
+
+            try {
+                const url = editId ? `/api/coupons/${editId}` : '/api/coupons';
+                const method = editId ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}` 
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeCouponModal();
+                    loadCoupons();
+                } else {
+                    alert(data.error || 'Error saving coupon');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error saving coupon');
+            }
+            btn.disabled = false;
+            btn.textContent = 'Save Coupon';
+        }
+
+        async function toggleCouponStatus(id, currentStatus) {
+            try {
+                await fetch(`/api/coupons/${id}`, {
+                    method: 'PATCH',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}` 
+                    },
+                    body: JSON.stringify({ active: !currentStatus })
+                });
+                loadCoupons();
+            } catch (error) {
+                console.error('Toggle status error:', error);
+            }
+        }
+
+        async function deleteCoupon(id, code) {
+            if (!confirm(`Are you sure you want to delete the coupon "${code}"?`)) return;
+            try {
+                await fetch(`/api/coupons/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                loadCoupons();
+            } catch (error) {
+                console.error('Delete coupon error:', error);
+            }
+        }
+
+        function adminLogout() {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminEmail');
+            window.location.href = '/admin/login';
+        }
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            document.getElementById('adminSidebar').classList.toggle('collapsed');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<%- include('partials/header') %>
+
+<section class="page-hero">
+    <div class="container">
+        <h1 class="page-title">Shop All Products</h1>
+        <p class="page-subtitle">Discover our complete collection with the best prices</p>
+    </div>
+</section>
+
+<section class="section shop-section">
+    <div class="container">
+        <!-- Filters Bar -->
+        <div class="filters-bar" id="filtersBar">
+            <div class="filter-group">
+                <label class="filter-label">Category</label>
+                <select class="filter-select" id="categoryFilter" onchange="applyFilters()">
+                    <option value="all" <%= currentCategory === 'all' ? 'selected' : '' %>>All Categories</option>
+                    <% categories.forEach(cat => { %>
+                    <option value="<%= cat.name %>" <%= currentCategory === cat.name ? 'selected' : '' %>><%= cat.name %></option>
+                    <% }); %>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Sort By</label>
+                <select class="filter-select" id="sortFilter" onchange="applyFilters()">
+                    <option value="newest" <%= currentSort === 'newest' ? 'selected' : '' %>>Newest First</option>
+                    <option value="price-low" <%= currentSort === 'price-low' ? 'selected' : '' %>>Price: Low to High</option>
+                    <option value="price-high" <%= currentSort === 'price-high' ? 'selected' : '' %>>Price: High to Low</option>
+                    <option value="discount" <%= currentSort === 'discount' ? 'selected' : '' %>>Biggest Discount</option>
+                </select>
+            </div>
+            <% if (searchQuery) { %>
+            <div class="filter-group active-search">
+                <span>Searching: "<strong><%= searchQuery %></strong>"</span>
+                <a href="/shop" class="clear-search"><i class="fas fa-times"></i></a>
+            </div>
+            <% } %>
+            <div class="results-count">
+                <span><%= products.length %> product<%= products.length !== 1 ? 's' : '' %> found</span>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <% if (products.length > 0) { %>
+        <div class="products-grid">
+            <% products.forEach(product => { %>
+            <div class="product-card">
+                <a href="/product/<%= product.id %>" class="product-card-link">
+                    <div class="product-image-wrap">
+                        <% if (product.images && product.images.length > 0) { %>
+                        <img src="<%= product.images[0] %>" alt="<%= product.name %>" class="product-image" loading="lazy">
+                        <% } else { %>
+                        <div class="product-image product-placeholder">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <% } %>
+                        <div class="product-badges">
+                            <% if (product.isNew) { %>
+                            <span class="badge badge-new">NEW</span>
+                            <% } %>
+                            <% if (product.originalPrice > product.salePrice) { %>
+                            <span class="badge badge-discount">-<%= Math.round(((product.originalPrice - product.salePrice) / product.originalPrice) * 100) %>%</span>
+                            <% } %>
+                        </div>
+                        <div class="product-overlay">
+                            <button class="quick-add-btn" onclick="event.preventDefault(); addToCart('<%= product.id %>', '<%= product.name %>', <%= product.salePrice %>, <%= product.originalPrice %>, '<%= product.images && product.images[0] ? product.images[0] : '' %>')">
+                                <i class="fas fa-shopping-bag"></i> Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category"><%= product.category %></span>
+                        <h3 class="product-name"><%= product.name %></h3>
+                        <div class="product-pricing">
+                            <span class="current-price">₹<%= product.salePrice.toLocaleString('en-IN') %></span>
+                            <% if (product.originalPrice > product.salePrice) { %>
+                            <span class="original-price">₹<%= product.originalPrice.toLocaleString('en-IN') %></span>
+                            <span class="discount-tag">Save ₹<%= (product.originalPrice - product.salePrice).toLocaleString('en-IN') %></span>
+                            <% } %>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <% }); %>
+        </div>
+        <% } else { %>
+        <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <h3>No Products Found</h3>
+            <p>Try adjusting your filters or search terms.</p>
+            <a href="/shop" class="btn btn-primary">View All Products</a>
+        </div>
+        <% } %>
+    </div>
+</section>
+
+<script>
+    function applyFilters() {
+        const category = document.getElementById('categoryFilter').value;
+        const sort = document.getElementById('sortFilter').value;
+        const params = new URLSearchParams();
+        if (category !== 'all') params.set('category', category);
+        if (sort !== 'newest') params.set('sort', sort);
+        <% if (searchQuery) { %>
+        params.set('search', '<%= searchQuery %>');
+        <% } %>
+        window.location.href = '/shop' + (params.toString() ? '?' + params.toString() : '');
+    }
+</script>
+
+<%- include('partials/footer') %>

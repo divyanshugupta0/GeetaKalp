@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Organic Ethereal - Sanctuary Login</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Eb+Garamond:ital,wght@0,400..800;1,400..800&amp;family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@300..400,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "inverse-on-surface": "#ecf3e6",
+                      "surface-tint": "#006e1e",
+                      "on-tertiary": "#ffffff",
+                      "on-background": "#171d15",
+                      "tertiary": "#aa265b",
+                      "on-primary-fixed": "#002204",
+                      "surface-dim": "#d5dccf",
+                      "primary": "#006b1d",
+                      "background-dark": "#112115",
+                      "on-tertiary-fixed-variant": "#8d0846",
+                      "divider": "rgba(17, 33, 21, 0.1)",
+                      "inverse-surface": "#2b3229",
+                      "primary-fixed-dim": "#66df6c",
+                      "surface-bright": "#f4fcee",
+                      "on-error-container": "#93000a",
+                      "outline-variant": "#bdcab8",
+                      "inverse-primary": "#66df6c",
+                      "tertiary-fixed-dim": "#ffb1c5",
+                      "error": "#ba1a1a",
+                      "on-secondary-container": "#576959",
+                      "on-secondary": "#ffffff",
+                      "tertiary-container": "#ca4174",
+                      "on-tertiary-container": "#fffbff",
+                      "surface-container-lowest": "#ffffff",
+                      "secondary": "#516353",
+                      "on-primary": "#ffffff",
+                      "primary-fixed": "#83fc86",
+                      "tertiary-fixed": "#ffd9e1",
+                      "glass-surface": "rgba(255, 255, 255, 0.8)",
+                      "on-tertiary-fixed": "#3f001b",
+                      "error-container": "#ffdad6",
+                      "surface-container-highest": "#dde5d8",
+                      "surface-variant": "#dde5d8",
+                      "surface-container": "#e9f0e3",
+                      "background": "#f4fcee",
+                      "glass-border": "rgba(255, 255, 255, 1.0)",
+                      "surface-container-high": "#e3eadd",
+                      "surface": "#f4fcee",
+                      "on-surface": "#171d15",
+                      "on-primary-fixed-variant": "#005315",
+                      "on-secondary-fixed-variant": "#3a4b3d",
+                      "background-light": "#f6f8f6",
+                      "secondary-fixed": "#d4e8d4",
+                      "secondary-fixed-dim": "#b8ccb9",
+                      "on-surface-variant": "#3e4a3c",
+                      "secondary-container": "#d4e8d4",
+                      "outline": "#6e7b6a",
+                      "on-error": "#ffffff",
+                      "surface-container-low": "#eff6e9",
+                      "primary-container": "#008727",
+                      "on-primary-container": "#f7fff1",
+                      "on-secondary-fixed": "#002204"
+              },
+              "borderRadius": {
+                      "DEFAULT": "1rem",
+                      "lg": "2rem",
+                      "xl": "3rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "section-margin": "48px",
+                      "container-padding": "24px",
+                      "unit": "4px",
+                      "element-gap": "12px",
+                      "stack-gap": "32px"
+              },
+              "fontFamily": {
+                      "display-lg": ["Eb Garamond"],
+                      "display-md": ["Eb Garamond"],
+                      "label-sm": ["Plus Jakarta Sans"],
+                      "label-caps": ["Plus Jakarta Sans"],
+                      "body-md": ["Plus Jakarta Sans"],
+                      "display-sm": ["Eb Garamond"]
+              },
+              "fontSize": {
+                      "display-lg": ["36px", {"lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                      "display-md": ["30px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                      "label-sm": ["12px", {"lineHeight": "1", "fontWeight": "400"}],
+                      "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "500"}],
+                      "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "display-sm": ["20px", {"lineHeight": "1.2", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>.material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 24;
+    font-size: 20px
+    }
+.glass-panel {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.5)
+    }
+.bg-ethereal-blur {
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuBZngXBBQ13lnELI8uwxMWIVn3ITPOpOTOiV2b78YdJtcMtVuh9A6ldwPyba96aPQVU9eGCYRtngwgC-nNOrW4zOtZ4mjCWhvSedEBy6p_wB0g3_59eA9EJI411DgxoIx1zyuJU7N3B2uKIt5N0G2frKhtClNgwBgVWh1gjiTdOXKU6ZnKaDo7GJko6b3Iqv-XzQfsHIdC58ZZcjSTY_u6r8ZVZwRnfWpbZMLQ5hX_2x8l1KmpLZuLBgCXTL5lujw8deS3Sz6q4jyM);
+    background-size: cover;
+    background-position: center
+    }</style>
+</head>
+<body class="bg-background-light font-body-md text-on-surface overflow-hidden">
+<!-- Transactional Screen: Navigation and FAB are suppressed per "The Destination Rule" and "Contextual FAB Suppression" -->
+<!-- Main Identity Canvas -->
+<main class="relative h-screen w-full flex items-center justify-center bg-ethereal-blur px-container-padding" data-alt="A serene and ethereal botanical background featuring soft-focus sage green leaves and delicate white flora. The lighting is high-key and misty, creating a weightless, dreamy atmosphere characteristic of a premium wellness brand. Subtle light leaks dance across the composition, enhancing the feeling of a morning ritual in a glass-walled apothecary. The colors are predominantly muted greens, creams, and whites.">
+<!-- Depth Layer: Tonal Overlay (Level 1) -->
+<div class="absolute inset-0 bg-[#11211533] backdrop-blur-[4px]"></div>
+<!-- Glassmorphic Modal (Level 2 Surface) -->
+<section class="glass-panel w-full max-w-[400px] rounded-xl p-10 flex flex-col items-center shadow-sm relative z-10">
+<!-- Logo Section -->
+<div class="mb-stack-gap text-center">
+<span class="font-display-md text-display-md text-primary italic tracking-tight">Organic Ethereal</span>
+</div>
+<!-- Title -->
+<h1 class="font-display-lg text-display-lg text-on-surface text-center mb-element-gap leading-tight">
+                Welcome Back to the Sanctuary
+            </h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant/70 text-center uppercase tracking-widest mb-stack-gap">
+                Step into your ritual
+            </p>
+<!-- Authentication Form -->
+<form class="w-full flex flex-col gap-6">
+<!-- Email Input -->
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-secondary/80 ml-2" for="email">Email Address</label>
+<div class="relative group">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-secondary/40">mail</span>
+<input class="w-full bg-white/40 border border-primary/10 rounded-full py-4 pl-12 pr-6 font-body-md text-on-surface placeholder:text-on-surface-variant/30 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-300" id="email" placeholder="your@email.com" type="email"/>
+</div>
+</div>
+<!-- Password Input -->
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-secondary/80 ml-2" for="password">Password</label>
+<div class="relative group">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-secondary/40">lock</span>
+<input class="w-full bg-white/40 border border-primary/10 rounded-full py-4 pl-12 pr-6 font-body-md text-on-surface placeholder:text-on-surface-variant/30 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all duration-300" id="password" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<!-- Forgot Password -->
+<div class="flex justify-end -mt-2">
+<a class="font-label-sm text-label-sm text-on-surface-variant/50 hover:text-primary transition-colors duration-300 italic" href="#">Forgotten your path?</a>
+</div>
+<!-- Primary Action -->
+<button class="w-full bg-primary text-on-primary font-label-caps text-label-caps uppercase tracking-[0.2em] py-5 rounded-full hover:bg-primary-container transition-all duration-500 shadow-sm active:scale-[0.98]" type="submit">
+                    Enter Sanctuary
+                </button>
+</form>
+<!-- Secondary Actions -->
+<div class="mt-stack-gap flex flex-col items-center gap-4">
+<div class="flex items-center gap-2 w-full px-4">
+<div class="h-[1px] flex-grow bg-divider"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant/30">OR</span>
+<div class="h-[1px] flex-grow bg-divider"></div>
+</div>
+<a class="font-label-caps text-label-caps text-secondary hover:text-primary transition-colors duration-300 flex items-center gap-2" href="#">
+                    Create an Account
+                    <span class="material-symbols-outlined">arrow_forward</span>
+</a>
+</div>
+</section>
+<!-- Aesthetic Flourish: Floating Botanical elements (Blurred Images) -->
+<div class="absolute -bottom-20 -left-20 w-80 h-80 opacity-40 mix-blend-multiply filter blur-3xl rounded-full bg-primary/10"></div>
+<div class="absolute top-20 -right-20 w-64 h-64 opacity-30 mix-blend-multiply filter blur-3xl rounded-full bg-secondary-fixed"></div>
+</main>
+<!-- Footer Segment (Minimalist Copyright) -->
+<footer class="fixed bottom-6 w-full text-center z-20">
+<p class="font-label-sm text-label-sm text-on-surface-variant/40 tracking-[0.2em] uppercase">
+            © 2024 Organic Ethereal. Crafted for Ritual.
+        </p>
+</footer>
+</body></html>

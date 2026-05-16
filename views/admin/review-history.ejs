@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Plus+Jakarta+Sans:wght@200..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+    <!-- Admin Sidebar -->
+    <%- include('../partials/admin-sidebar', { activePage: 'review-history' }) %>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <header class="admin-header">
+            <button class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+            <h2 class="admin-page-title">Review History</h2>
+            <div class="admin-user" id="adminUser">
+                <i class="fas fa-user-circle"></i>
+                <span id="adminEmail">Admin</span>
+            </div>
+        </header>
+
+        <div class="admin-content">
+            <div class="admin-section">
+                <div class="section-header-bar">
+                    <h3><i class="fas fa-history"></i> Approved Reviews</h3>
+                </div>
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Product ID</th>
+                                <th>Rating & Comment</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reviewsBody">
+                            <tr><td colspan="5" class="table-empty">Loading reviews...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentToken = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            currentToken = localStorage.getItem('adminToken');
+            if (!currentToken) {
+                window.location.href = '/admin/login';
+                return;
+            }
+            document.getElementById('adminEmail').textContent = localStorage.getItem('adminEmail') || 'Admin';
+            loadReviews();
+        });
+
+        async function loadReviews() {
+            try {
+                const res = await fetch('/api/reviews/admin', {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const data = await res.json();
+                const tbody = document.getElementById('reviewsBody');
+                
+                if (data.success) {
+                    const approvedReviews = data.reviews.filter(r => r.approved);
+                    
+                    if (approvedReviews.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="table-empty">No approved reviews yet.</td></tr>';
+                        return;
+                    }
+                    
+                    tbody.innerHTML = approvedReviews.map(r => {
+                        const date = new Date(r.createdAt).toLocaleDateString('en-IN');
+                        let stars = '';
+                        for(let i=1; i<=5; i++) {
+                            stars += `<i class="fas fa-star" style="color: ${i <= r.rating ? '#fbbf24' : '#e5e7eb'}"></i>`;
+                        }
+                        
+                        return `
+                        <tr>
+                            <td style="white-space: nowrap;">${date}</td>
+                            <td>
+                                <div style="font-weight: 600;">${r.customerName}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">${r.customerEmail}</div>
+                            </td>
+                            <td><span style="font-family: monospace; font-size: 0.85rem; background: var(--bg-elevated); padding: 4px; border-radius: 4px;">${r.productId}</span></td>
+                            <td>
+                                <div style="margin-bottom: 4px;">${stars}</div>
+                                <div style="font-size: 0.9rem; max-width: 300px; white-space: normal;">"${r.comment}"</div>
+                            </td>
+                            <td>
+                                <button class="btn-icon btn-danger" onclick="deleteReview('${r.id}')"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `}).join('');
+                }
+            } catch (error) {
+                console.error(error);
+                document.getElementById('reviewsBody').innerHTML = '<tr><td colspan="5" class="table-empty text-danger">Error loading reviews</td></tr>';
+            }
+        }
+
+        async function deleteReview(id) {
+            if(!confirm('Delete this review permanently?')) return;
+            try {
+                await fetch(`/api/reviews/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                loadReviews();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            document.getElementById('adminSidebar').classList.toggle('collapsed');
+        });
+    </script>
+</body>
+</html>

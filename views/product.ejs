@@ -1,0 +1,223 @@
+<%- include('partials/header') %>
+
+<section class="section product-detail-section">
+    <div class="container">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a href="/">Home</a>
+            <i class="fas fa-chevron-right"></i>
+            <a href="/shop">Shop</a>
+            <i class="fas fa-chevron-right"></i>
+            <a href="/shop?category=<%= product.category %>"><%= product.category %></a>
+            <i class="fas fa-chevron-right"></i>
+            <span><%= product.name %></span>
+        </nav>
+
+        <div class="product-detail-grid">
+            <!-- Product Images -->
+            <div class="product-gallery">
+                <div class="main-image-wrap">
+                    <% if (product.images && product.images.length > 0) { %>
+                    <img src="<%= product.images[0] %>" alt="<%= product.name %>" class="main-image" id="mainImage">
+                    <% } else { %>
+                    <div class="main-image product-placeholder">
+                        <i class="fas fa-image"></i>
+                    </div>
+                    <% } %>
+                    <div class="product-badges">
+                        <% if (product.isNew) { %>
+                        <span class="badge badge-new badge-lg">NEW</span>
+                        <% } %>
+                        <% if (product.discountPercent > 0) { %>
+                        <span class="badge badge-discount badge-lg">-<%= product.discountPercent %>%</span>
+                        <% } %>
+                    </div>
+                </div>
+                <% if (product.images && product.images.length > 1) { %>
+                <div class="thumbnail-row">
+                    <% product.images.forEach((img, i) => { %>
+                    <button class="thumb-btn <%= i === 0 ? 'active' : '' %>" onclick="changeImage('<%= img %>', this)">
+                        <img src="<%= img %>" alt="<%= product.name %> view <%= i + 1 %>">
+                    </button>
+                    <% }); %>
+                </div>
+                <% } %>
+            </div>
+
+            <!-- Product Info -->
+            <div class="product-detail-info">
+                <span class="product-category-tag"><%= product.category %></span>
+                <h1 class="product-detail-name"><%= product.name %></h1>
+
+                <!-- Pricing -->
+                <div class="product-detail-pricing">
+                    <div class="price-row">
+                        <span class="detail-current-price">₹<%= product.salePrice.toLocaleString('en-IN') %></span>
+                        <% if (product.originalPrice > product.salePrice) { %>
+                        <span class="detail-original-price">₹<%= product.originalPrice.toLocaleString('en-IN') %></span>
+                        <% } %>
+                    </div>
+                    <% if (product.discountPercent > 0) { %>
+                    <div class="savings-banner">
+                        <i class="fas fa-tag"></i>
+                        You save ₹<%= (product.originalPrice - product.salePrice).toLocaleString('en-IN') %> (<%= product.discountPercent %>% OFF)
+                    </div>
+                    <% } %>
+                </div>
+
+                <!-- Description -->
+                <% if (product.description) { %>
+                <div class="product-description">
+                    <h3>Description</h3>
+                    <p><%= product.description %></p>
+                </div>
+                <% } %>
+
+                <!-- Stock Status -->
+                <div class="stock-status">
+                    <% if (product.stock > 0) { %>
+                    <span class="in-stock"><i class="fas fa-check-circle"></i> In Stock (<%= product.stock %> available)</span>
+                    <% } else { %>
+                    <span class="out-of-stock"><i class="fas fa-times-circle"></i> Out of Stock</span>
+                    <% } %>
+                </div>
+
+                <!-- Quantity & Add to Cart -->
+                <div class="product-actions">
+                    <div class="quantity-selector">
+                        <button class="qty-btn" onclick="changeQty(-1)">−</button>
+                        <input type="number" class="qty-input" id="quantity" value="1" min="1" max="<%= product.stock || 99 %>">
+                        <button class="qty-btn" onclick="changeQty(1)">+</button>
+                    </div>
+                    <button class="btn btn-primary btn-lg add-to-cart-btn" id="addToCartBtn"
+                        onclick="addToCart('<%= product.id %>', '<%= product.name %>', <%= product.salePrice %>, <%= product.originalPrice %>, '<%= product.images && product.images[0] ? product.images[0] : '' %>', parseInt(document.getElementById('quantity').value))"
+                        <%= product.stock === 0 ? 'disabled' : '' %>>
+                        <i class="fas fa-shopping-bag"></i>
+                        <span>Add to Cart</span>
+                    </button>
+                </div>
+
+                <!-- Trust Badges -->
+                <div class="trust-badges">
+                    <div class="trust-badge">
+                        <i class="fas fa-truck"></i>
+                        <span>Free Delivery</span>
+                    </div>
+                    <div class="trust-badge">
+                        <i class="fas fa-shield-halved"></i>
+                        <span>Secure Payment</span>
+                    </div>
+                    <div class="trust-badge">
+                        <i class="fas fa-rotate-left"></i>
+                        <span>Easy Returns</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Reviews -->
+        <div class="reviews-section" style="margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border); margin-bottom: 60px;">
+            <h2 class="section-title">Customer Reviews</h2>
+            <% if (typeof reviews !== 'undefined' && reviews.length > 0) { %>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px;">
+                    <% reviews.forEach(r => { %>
+                        <div style="background: var(--bg-card); padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border);">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                                <div>
+                                    <h4 style="margin: 0; font-size: 1.1rem;"><%= r.customerName %></h4>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted);"><%= new Date(r.createdAt).toLocaleDateString('en-IN') %></div>
+                                </div>
+                                <div style="color: #fbbf24; font-size: 0.9rem;">
+                                    <% for(let i=1; i<=5; i++) { %>
+                                        <i class="fas fa-star" style="<%= i <= r.rating ? '' : 'color: #e5e7eb;' %>"></i>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <p style="margin: 0; color: var(--text-dim); font-size: 0.95rem; line-height: 1.6;"><%= r.comment %></p>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <div style="text-align: center; padding: 40px; background: var(--bg-elevated); border-radius: var(--radius-lg);">
+                    <i class="fas fa-comment-slash" style="font-size: 2.5rem; color: var(--text-dim); margin-bottom: 16px;"></i>
+                    <p style="color: var(--text-muted); margin: 0;">No reviews yet. Purchase this product to leave a review!</p>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Related Products -->
+        <% if (relatedProducts && relatedProducts.length > 0) { %>
+        <div class="related-section">
+            <h2 class="section-title">Related Products</h2>
+            <div class="products-grid">
+                <% relatedProducts.forEach(rp => { %>
+                <div class="product-card">
+                    <a href="/product/<%= rp.id %>" class="product-card-link">
+                        <div class="product-image-wrap">
+                            <% if (rp.images && rp.images.length > 0) { %>
+                            <img src="<%= rp.images[0] %>" alt="<%= rp.name %>" class="product-image" loading="lazy">
+                            <% } else { %>
+                            <div class="product-image product-placeholder"><i class="fas fa-image"></i></div>
+                            <% } %>
+                            <div class="product-badges">
+                                <% if (rp.isNew) { %><span class="badge badge-new">NEW</span><% } %>
+                                <% if (rp.originalPrice > rp.salePrice) { %>
+                                <span class="badge badge-discount">-<%= Math.round(((rp.originalPrice - rp.salePrice) / rp.originalPrice) * 100) %>%</span>
+                                <% } %>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name"><%= rp.name %></h3>
+                            <div class="product-pricing">
+                                <span class="current-price">₹<%= rp.salePrice.toLocaleString('en-IN') %></span>
+                                <% if (rp.originalPrice > rp.salePrice) { %>
+                                <span class="original-price">₹<%= rp.originalPrice.toLocaleString('en-IN') %></span>
+                                <% } %>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <% }); %>
+            </div>
+        </div>
+        <% } %>
+    </div>
+</section>
+
+<!-- Structured Data for SEO -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "<%= product.name %>",
+    "description": "<%= product.description ? product.description.replace(/"/g, '\\"') : '' %>",
+    "category": "<%= product.category %>",
+    <% if (product.images && product.images.length > 0) { %>
+    "image": "<%= product.images[0] %>",
+    <% } %>
+    "offers": {
+        "@type": "Offer",
+        "price": "<%= product.salePrice %>",
+        "priceCurrency": "INR",
+        "availability": "<%= product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' %>"
+    }
+}
+</script>
+
+<script>
+    function changeImage(src, btn) {
+        document.getElementById('mainImage').src = src;
+        document.querySelectorAll('.thumb-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    function changeQty(delta) {
+        const input = document.getElementById('quantity');
+        let val = parseInt(input.value) + delta;
+        if (val < 1) val = 1;
+        if (val > parseInt(input.max)) val = parseInt(input.max);
+        input.value = val;
+    }
+</script>
+
+<%- include('partials/footer') %>

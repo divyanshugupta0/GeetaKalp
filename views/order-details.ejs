@@ -1,0 +1,346 @@
+<%- include('partials/header') %>
+
+<section class="page-header" style="background: var(--bg-card); padding: 40px 20px; text-align: center; border-bottom: 1px solid var(--border);">
+    <div class="container">
+        <h1 style="margin: 0; font-size: 2rem;">Order Details</h1>
+        <p style="color: var(--text-muted); margin-top: 8px;">Order #<span style="font-family: monospace;"><%= orderId %></span></p>
+    </div>
+</section>
+
+<section style="padding: 60px 20px; background: var(--bg-body); min-height: 50vh;">
+    <div class="container" style="max-width: 800px;">
+        
+        <div id="loading" style="text-align: center; padding: 40px;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--text-muted);"></i>
+        </div>
+
+        <div id="orderDetails" style="display: none;">
+            <div class="order-card" style="background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; margin-bottom: 24px;">
+                <div style="background: var(--bg-elevated); padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">ORDER DATE</div>
+                        <div style="font-weight: 500;" id="odDate"></div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">STATUS</div>
+                        <div id="odStatus"></div>
+                    </div>
+                </div>
+
+                <div style="padding: 24px;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 16px;">Items</h3>
+                    <div id="odItems"></div>
+                </div>
+
+                <div style="padding: 24px; border-top: 1px solid var(--border); background: var(--bg-elevated);">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 16px;">Payment Summary</h3>
+                    
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-muted);">Payment Method:</span>
+                        <span style="font-weight: 500; text-transform: uppercase;" id="odMethod"></span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                        <span style="color: var(--text-muted);">Total Amount:</span>
+                        <span style="font-weight: 500;" id="odTotal"></span>
+                    </div>
+
+                    <div id="paymentBreakdownContainer">
+                        <!-- JS dynamic injection of Paid Online, Payment COD, Pending Collection -->
+                    </div>
+                </div>
+
+                <div style="padding: 24px; border-top: 1px solid var(--border);">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 16px;">Shipping Address</h3>
+                    <div id="odAddress" style="color: var(--text-muted); line-height: 1.6;"></div>
+                </div>
+            </div>
+            
+            <a href="/profile#orders" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back to Orders</a>
+        </div>
+
+        <div id="error" style="display: none; text-align: center; padding: 40px; color: var(--danger);">
+            <i class="fas fa-exclamation-circle" style="font-size: 2rem; margin-bottom: 16px;"></i>
+            <h3>Order Not Found</h3>
+            <p>We couldn't load the details for this order. It might not exist or you don't have permission to view it.</p>
+            <a href="/profile#orders" class="btn btn-primary" style="margin-top: 16px;">Return to Profile</a>
+        </div>
+
+    </div>
+</section>
+
+<!-- Review Modal -->
+<div class="review-overlay" id="reviewModal">
+    <div class="review-modal-box">
+        <div class="review-modal-header">
+            <h3 class="review-modal-title">Write a Review</h3>
+            <button class="review-modal-close" onclick="closeReviewModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="review-modal-body">
+            <form id="reviewForm" onsubmit="submitReview(event)">
+                <input type="hidden" id="reviewProductId">
+                
+                <div style="margin-bottom: 24px;">
+                    <p style="margin: 0 0 8px; color: var(--text-muted);">Product:</p>
+                    <h4 id="reviewProductName" style="margin: 0;"></h4>
+                </div>
+
+                <div class="form-group" style="text-align: center; margin-bottom: 24px;">
+                    <label>Rating</label>
+                    <div class="star-rating" id="starRating" style="font-size: 2rem; cursor: pointer; color: #e5e7eb; display: flex; justify-content: center; gap: 8px;">
+                        <i class="fas fa-star" onclick="setRating(1)"></i>
+                        <i class="fas fa-star" onclick="setRating(2)"></i>
+                        <i class="fas fa-star" onclick="setRating(3)"></i>
+                        <i class="fas fa-star" onclick="setRating(4)"></i>
+                        <i class="fas fa-star" onclick="setRating(5)"></i>
+                    </div>
+                    <input type="hidden" id="reviewRating" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="reviewComment">Your Review</label>
+                    <textarea id="reviewComment" class="form-input" rows="4" required placeholder="What did you like or dislike?"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" id="submitReviewBtn">Submit Review</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .status-badge {
+        padding: 6px 16px; border-radius: 50px; font-size: 0.85rem;
+        font-weight: 600; text-transform: capitalize; display: inline-block;
+    }
+    
+    /* Review Modal Styling */
+    .review-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 999999;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+    }
+    .review-overlay.active { display: flex !important; }
+    .review-modal-box {
+        background: var(--bg-card);
+        width: 90%;
+        max-width: 500px;
+        border-radius: var(--radius-lg);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        overflow: hidden;
+        animation: modalSlideIn 0.3s ease;
+        position: relative;
+    }
+    .review-modal-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .review-modal-title { margin: 0; font-size: 1.25rem; font-weight: 600; }
+    .review-modal-close {
+        background: none; border: none; font-size: 1.25rem;
+        color: var(--text-muted); cursor: pointer;
+    }
+    .review-modal-body { padding: 24px; }
+    @keyframes modalSlideIn {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+
+<script>
+    const orderId = '<%= orderId %>';
+    let currentUser = null;
+
+    firebase.auth().onAuthStateChanged(user => {
+        if (user) {
+            currentUser = user;
+            loadOrderDetails();
+        } else {
+            window.location.href = '/profile';
+        }
+    });
+
+    async function loadOrderDetails() {
+        try {
+            const snap = await firebase.database().ref(`orders/${orderId}`).once('value');
+            const order = snap.val();
+
+            if (!order || order.customerInfo.email !== currentUser.email) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('orderDetails').style.display = 'block';
+
+            // Populate header
+            const date = new Date(order.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('odDate').textContent = date;
+
+            let statusColor = '#38bdf8'; 
+            let statusBg = 'rgba(14,165,233,0.15)';
+            if (order.status === 'paid') { statusColor = 'var(--success)'; statusBg = 'rgba(16,185,129,0.15)'; }
+            if (order.status === 'created') { statusColor = 'var(--accent)'; statusBg = 'rgba(245,158,11,0.15)'; }
+            if (order.status === 'delivered') { statusColor = 'var(--success)'; statusBg = 'rgba(16,185,129,0.2)'; }
+
+            document.getElementById('odStatus').innerHTML = `<span class="status-badge" style="color: ${statusColor}; background: ${statusBg};">${order.status}</span>`;
+
+            // Populate Items
+            const itemsHtml = (order.items || []).map(item => `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="width: 50px; height: 50px; background: var(--bg-body); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--text-dim);">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 500;">${item.name}</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">Qty: ${item.quantity} × ₹${item.price.toLocaleString('en-IN')}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 8px; text-align: right;">₹${(item.quantity * item.price).toLocaleString('en-IN')}</div>
+                        ${order.status === 'delivered' ? `<button class="btn btn-outline btn-sm" onclick="openReviewModal('${item.id}', '${item.name.replace(/'/g, "\\'")}')">Write Review</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('odItems').innerHTML = itemsHtml;
+
+            // Populate Payment Summary
+            document.getElementById('odMethod').textContent = order.paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Online Payment';
+            
+            const total = order.amount || 0;
+            // Online paid is what was collected via razorpay (or assumed fully paid if method wasn't COD and it's not 'created')
+            const paidOnline = order.amountPaidOnline !== undefined ? order.amountPaidOnline : (order.status === 'created' ? 0 : (order.paymentMethod === 'cod' ? 0 : total));
+            // COD paid is whatever was remaining, but only collected when status is delivered
+            const paidCOD = order.status === 'delivered' ? Math.max(0, total - paidOnline) : 0;
+            // Remaining collection
+            const remaining = Math.max(0, total - paidOnline - paidCOD);
+
+            document.getElementById('odTotal').textContent = `₹${total.toLocaleString('en-IN')}`;
+            
+            // Dynamic payment breakdown HTML
+            let paymentHtml = '';
+            
+            if (paidOnline > 0) {
+                paymentHtml += `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--success);">
+                        <span>Paid Online:</span>
+                        <span style="font-weight: 600;">₹${paidOnline.toLocaleString('en-IN')}</span>
+                    </div>
+                `;
+            }
+            
+            if (paidCOD > 0) {
+                paymentHtml += `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--success);">
+                        <span>Payment COD:</span>
+                        <span style="font-weight: 600;">₹${paidCOD.toLocaleString('en-IN')}</span>
+                    </div>
+                `;
+            }
+            
+            if (remaining > 0) {
+                paymentHtml += `
+                    <div style="display: flex; justify-content: space-between; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border); font-size: 1.1rem; font-weight: 600;">
+                        <span>Pending Collection (COD):</span>
+                        <span style="color: var(--primary);">₹${remaining.toLocaleString('en-IN')}</span>
+                    </div>
+                `;
+            }
+
+            // Replace the static placeholder with the dynamic breakdown
+            document.getElementById('paymentBreakdownContainer').innerHTML = paymentHtml;
+
+            // Populate Address
+            const c = order.customerInfo || {};
+            document.getElementById('odAddress').innerHTML = `
+                <strong>${c.name}</strong><br>
+                ${c.phone}<br>
+                ${c.address}<br>
+                ${c.city}, ${c.state} - ${c.pincode}
+            `;
+
+        } catch (error) {
+            console.error(error);
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+        }
+    }
+
+    // --- Review Modal Logic ---
+    function openReviewModal(productId, productName) {
+        document.getElementById('reviewModal').classList.add('active');
+        document.getElementById('reviewProductId').value = productId;
+        document.getElementById('reviewProductName').textContent = productName;
+        document.getElementById('reviewComment').value = '';
+        setRating(0);
+    }
+
+    function closeReviewModal() {
+        document.getElementById('reviewModal').classList.remove('active');
+    }
+
+    function setRating(rating) {
+        document.getElementById('reviewRating').value = rating || '';
+        const stars = document.getElementById('starRating').querySelectorAll('i');
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.style.color = '#fbbf24';
+            } else {
+                star.style.color = '#e5e7eb';
+            }
+        });
+    }
+
+    async function submitReview(e) {
+        e.preventDefault();
+        const rating = document.getElementById('reviewRating').value;
+        if (!rating) {
+            return showToast('Please select a star rating', 'error');
+        }
+
+        const btn = document.getElementById('submitReviewBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+        const payload = {
+            productId: document.getElementById('reviewProductId').value,
+            rating: parseInt(rating),
+            comment: document.getElementById('reviewComment').value,
+            customerName: currentUser.displayName || 'Customer',
+            customerEmail: currentUser.email
+        };
+
+        try {
+            const res = await fetch('/api/reviews', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeReviewModal();
+                showToast('Review submitted! It will appear after admin approval.', 'success');
+            } else {
+                showToast(data.error || 'Failed to submit review', 'error');
+            }
+        } catch (error) {
+            showToast('Failed to submit review', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Submit Review';
+        }
+    }
+</script>
+
+<%- include('partials/footer') %>

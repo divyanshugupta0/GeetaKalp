@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Plus+Jakarta+Sans:wght@200..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+    <!-- Admin Sidebar -->
+    <%- include('../partials/admin-sidebar', { activePage: 'users' }) %>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <header class="admin-header">
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h2 class="admin-page-title">Users Directory</h2>
+            <div class="admin-user" id="adminUser">
+                <i class="fas fa-user-circle"></i>
+                <span id="adminEmail">Admin</span>
+            </div>
+        </header>
+
+        <div class="admin-content">
+            <div class="admin-section">
+                <div class="section-header-bar">
+                    <h3><i class="fas fa-users"></i> All Registered Customers</h3>
+                </div>
+                <div class="table-wrap">
+                    <table class="admin-table" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Total Orders</th>
+                                <th>Lifetime Value</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersBody">
+                            <tr>
+                                <td colspan="5" class="table-empty">Loading users...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- User Details Modal -->
+    <div class="modal-overlay" id="userModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>Customer Details</h3>
+                <button class="modal-close" onclick="closeUserModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div>
+                        <span class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Name</span>
+                        <div style="font-weight: 500; font-size: 1.1rem;" id="modalUserName"></div>
+                    </div>
+                    <div>
+                        <span class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Email</span>
+                        <div id="modalUserEmail"></div>
+                    </div>
+                    <div>
+                        <span class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Phone</span>
+                        <div id="modalUserPhone"></div>
+                    </div>
+                    <div>
+                        <span class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Shipping Address</span>
+                        <div id="modalUserAddress"></div>
+                        <div id="modalUserCityState"></div>
+                        <div id="modalUserZip"></div>
+                    </div>
+                    <div style="display: flex; gap: 24px; border-top: 1px solid var(--border); padding-top: 16px;">
+                        <div>
+                            <span class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Total Orders</span>
+                            <div style="font-weight: 600; font-size: 1.2rem; color: var(--primary);" id="modalUserOrders"></div>
+                        </div>
+                        <div>
+                            <span class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Total Spent</span>
+                            <div style="font-weight: 600; font-size: 1.2rem; color: var(--success);" id="modalUserSpent"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-muted" style="font-size: 0.8rem; text-transform: uppercase;">First Order</span>
+                        <div id="modalUserFirstDate"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentToken = '';
+        let allUsers = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            currentToken = localStorage.getItem('adminToken');
+            if (!currentToken) {
+                window.location.href = '/admin/login';
+                return;
+            }
+            document.getElementById('adminEmail').textContent = localStorage.getItem('adminEmail') || 'Admin';
+            loadUsers();
+        });
+
+        async function loadUsers() {
+            try {
+                const res = await fetch('/api/users', {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    allUsers = data.users;
+                    renderUsers();
+                }
+            } catch (error) {
+                console.error('Failed to load users', error);
+            }
+        }
+
+        function renderUsers() {
+            const tbody = document.getElementById('usersBody');
+            if (allUsers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="table-empty">No customers found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = allUsers.map((user, index) => `
+                <tr>
+                    <td style="font-weight: 500;">${user.name}</td>
+                    <td>${user.email}</td>
+                    <td><span class="status-badge" style="background: rgba(108,60,224,0.1); color: var(--primary);">${user.totalOrders} Orders</span></td>
+                    <td style="font-weight: 600;">₹${user.totalSpent.toLocaleString('en-IN')}</td>
+                    <td>
+                        <button class="btn-icon" onclick="openUserModal(${index})" title="View Details">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openUserModal(index) {
+            const user = allUsers[index];
+            document.getElementById('modalUserName').textContent = user.name;
+            document.getElementById('modalUserEmail').textContent = user.email;
+            document.getElementById('modalUserPhone').textContent = user.phone;
+            document.getElementById('modalUserAddress').textContent = user.address;
+            document.getElementById('modalUserCityState').textContent = `${user.city}, ${user.state}`;
+            document.getElementById('modalUserZip').textContent = user.zipCode;
+            document.getElementById('modalUserOrders').textContent = user.totalOrders;
+            document.getElementById('modalUserSpent').textContent = `₹${user.totalSpent.toLocaleString('en-IN')}`;
+            document.getElementById('modalUserFirstDate').textContent = user.firstOrderDate ? new Date(user.firstOrderDate).toLocaleDateString('en-IN') : 'N/A';
+            
+            document.getElementById('userModal').classList.add('active');
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').classList.remove('active');
+        }
+
+        function adminLogout() {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminEmail');
+            window.location.href = '/admin/login';
+        }
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            document.getElementById('adminSidebar').classList.toggle('collapsed');
+        });
+    </script>
+</body>
+</html>

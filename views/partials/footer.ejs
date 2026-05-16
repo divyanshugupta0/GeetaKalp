@@ -1,0 +1,169 @@
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-wave">
+            <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
+                <path d="M0,60 C360,120 720,0 1080,60 C1260,90 1380,30 1440,60 L1440,120 L0,120 Z" fill="currentColor"></path>
+            </svg>
+        </div>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <div class="footer-logo">
+                        <span class="logo-icon">✦</span>
+                        <span class="logo-text">Geeta Kalp</span>
+                    </div>
+                    <p class="footer-desc">Your trusted destination for premium products at the best prices. Quality you can feel, prices you'll love.</p>
+                    <div class="footer-social">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/shop">Shop</a></li>
+                        <li><a href="/shop?sort=discount">Offers</a></li>
+                        <li><a href="/cart">Cart</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Customer Service</h4>
+                    <ul>
+                        <li><a href="#">Track Order</a></li>
+                        <li><a href="#">Returns & Refunds</a></li>
+                        <li><a href="#">Shipping Policy</a></li>
+                        <li><a href="#">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Contact</h4>
+                    <ul class="contact-list">
+                        <li><i class="fas fa-envelope"></i> support@geetakalp.com</li>
+                        <li><i class="fas fa-phone"></i> +91-XXXXX-XXXXX</li>
+                        <li><i class="fas fa-map-marker-alt"></i> India</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <%= currentYear %> Geeta Kalp. All rights reserved.</p>
+                <div class="payment-icons">
+                    <i class="fab fa-cc-visa"></i>
+                    <i class="fab fa-cc-mastercard"></i>
+                    <i class="fas fa-university"></i>
+                    <span class="upi-badge">UPI</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Customer Login Modal -->
+    <div class="modal-overlay" id="customerLoginModal">
+        <div class="modal modal-sm" style="padding: 0; overflow: hidden;">
+            <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+                <button class="modal-close" onclick="closeLoginModal()"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div style="padding: 0 32px 32px;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h3 style="font-family: var(--font-display); font-size: 1.8rem; margin-bottom: 8px;" id="authModalTitle">Welcome Back</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;" id="authModalDesc">Log in to your Geeta Kalp account</p>
+                </div>
+
+                <!-- Auth Tabs -->
+                <div style="display: flex; gap: 8px; margin-bottom: 24px; background: var(--bg-elevated); padding: 4px; border-radius: var(--radius-sm);">
+                    <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')" style="flex: 1; padding: 10px; border: none; background: var(--bg-card); border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; box-shadow: var(--shadow-sm); color: var(--text);">Login</button>
+                    <button class="auth-tab" id="tabSignup" onclick="switchAuthTab('signup')" style="flex: 1; padding: 10px; border: none; background: transparent; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; color: var(--text-muted);">Sign Up</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" onsubmit="loginWithEmail(event)">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <input type="email" id="loginEmail" required class="form-input" placeholder="Email address">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <input type="password" id="loginPassword" required class="form-input" placeholder="Password">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block" style="padding: 14px; margin-bottom: 16px;">Login</button>
+                </form>
+
+                <!-- Signup Form -->
+                <form id="signupForm" style="display: none;" onsubmit="registerWithEmail(event)">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <input type="text" id="signupName" required class="form-input" placeholder="Full Name">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <input type="email" id="signupEmail" required class="form-input" placeholder="Email address">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <input type="password" id="signupPassword" required class="form-input" placeholder="Password (min 6 chars)" minlength="6">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <input type="password" id="signupConfirmPassword" required class="form-input" placeholder="Confirm Password" minlength="6">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block" style="padding: 14px; margin-bottom: 16px;">Create Account</button>
+                </form>
+
+                <div style="text-align: center; margin: 16px 0; color: var(--text-muted); font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 12px;">
+                    <div style="height: 1px; flex: 1; background: var(--border);"></div>
+                    <span>OR</span>
+                    <div style="height: 1px; flex: 1; background: var(--border);"></div>
+                </div>
+
+                <button class="btn btn-outline btn-block" onclick="loginWithGoogle()" style="padding: 12px; font-size: 1rem; color: var(--text); border-color: var(--border);">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width: 20px; height: 20px; margin-right: 12px; display: inline-block;">
+                    Continue with Google
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart JS (loaded on all pages for cart count) -->
+    <script src="/js/cart.js"></script>
+    <!-- Auth JS (Customer auth state) -->
+    <script src="/js/auth.js"></script>
+
+    <!-- Navbar scroll effect -->
+    <script>
+        // Navbar scroll
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Hamburger menu
+        const hamburger = document.getElementById('hamburger');
+        const navLinks = document.getElementById('navLinks');
+        if (hamburger) {
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('active');
+                navLinks.classList.toggle('active');
+            });
+        }
+
+        // Search toggle
+        const searchToggle = document.getElementById('searchToggle');
+        const searchOverlay = document.getElementById('searchOverlay');
+        const searchClose = document.getElementById('searchClose');
+        const searchInput = document.getElementById('searchInput');
+
+        if (searchToggle) {
+            searchToggle.addEventListener('click', () => {
+                searchOverlay.classList.add('active');
+                searchInput.focus();
+            });
+        }
+        if (searchClose) {
+            searchClose.addEventListener('click', () => {
+                searchOverlay.classList.remove('active');
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<%- include('partials/header') %>
+
+<section class="section error-section">
+    <div class="container">
+        <div class="error-card">
+            <div class="error-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <h1>Something Went Wrong</h1>
+            <p><%= error %></p>
+            <div class="error-actions">
+                <a href="/" class="btn btn-primary">Go Home</a>
+                <a href="/shop" class="btn btn-outline">Browse Shop</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<%- include('partials/footer') %>

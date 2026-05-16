@@ -1,0 +1,511 @@
+<%- include('partials/header') %>
+
+<section class="page-hero page-hero-sm">
+    <div class="container">
+        <h1 class="page-title">Checkout</h1>
+    </div>
+</section>
+
+<section class="section checkout-section">
+    <div class="container">
+        <div class="checkout-layout">
+            <!-- Checkout Form -->
+            <div class="checkout-form-wrap">
+                <form id="checkoutForm" onsubmit="processCheckout(event)">
+                    <div class="form-section">
+                        <h3 class="form-section-title"><i class="fas fa-user"></i> Customer Details</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="custName">Full Name *</label>
+                                <input type="text" id="custName" name="name" required placeholder="Enter your full name" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="custEmail">Email Address *</label>
+                                <input type="email" id="custEmail" name="email" required placeholder="your@email.com" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="custPhone">Phone Number *</label>
+                                <input type="tel" id="custPhone" name="phone" required placeholder="+91 XXXXX XXXXX" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="fas fa-map-marker-alt"></i> Delivery Address
+                            <button type="button" id="editAddressBtn" class="btn btn-sm btn-outline" style="float: right; display: none;" onclick="showAddressForm()">Edit</button>
+                        </h3>
+                        
+                        <div id="savedAddressSummary" style="display: none; background: var(--bg-elevated); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 24px;">
+                            <p style="font-weight: 600; margin-bottom: 8px;">Delivering to:</p>
+                            <p id="summaryName" style="margin-bottom: 4px;"></p>
+                            <p id="summaryPhone" style="margin-bottom: 4px;; color: var(--text-muted);"></p>
+                            <p id="summaryFullAddress" style="color: var(--text-muted); line-height: 1.5;"></p>
+                        </div>
+
+                        <div id="addressFormWrap">
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label for="address">Street Address *</label>
+                                    <input type="text" id="address" name="address" required placeholder="House No., Street, Locality" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="city">City *</label>
+                                    <input type="text" id="city" name="city" required placeholder="City" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="state">State *</label>
+                                    <input type="text" id="state" name="state" required placeholder="State" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="pincode">Pincode *</label>
+                                    <input type="text" id="pincode" name="pincode" required placeholder="XXXXXX" pattern="[0-9]{6}" class="form-input">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title"><i class="fas fa-credit-card"></i> Payment Method</h3>
+                        <div class="payment-selection" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
+                            
+                            <% if (paymentSettings && paymentSettings.razorpay !== false) { %>
+                            <label class="payment-radio-label" style="display: flex; align-items: flex-start; gap: 12px; padding: 16px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer;" onclick="updatePaymentBtn()">
+                                <input type="radio" name="paymentMode" value="online" checked style="margin-top: 4px;">
+                                <div>
+                                    <strong style="display: block; font-size: 1.05rem; margin-bottom: 4px;">Pay Online Securely</strong>
+                                    <div style="font-size: 0.85rem; color: var(--text-muted);">Credit/Debit Card, Net Banking, UPI, Wallets</div>
+                                </div>
+                            </label>
+                            <% } %>
+
+                            <% if (paymentSettings && paymentSettings.cod !== false) { %>
+                            <label class="payment-radio-label" style="display: flex; align-items: flex-start; gap: 12px; padding: 16px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer;" onclick="updatePaymentBtn()">
+                                <input type="radio" name="paymentMode" value="cod" <%= (!paymentSettings || paymentSettings.razorpay === false) ? 'checked' : '' %> style="margin-top: 4px;">
+                                <div>
+                                    <strong style="display: block; font-size: 1.05rem; margin-bottom: 4px;">Cash on Delivery (COD)</strong>
+                                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                                        <% if (paymentSettings.codAdvancePercent > 0) { %>
+                                            Pay <%= paymentSettings.codAdvancePercent %>% advance online to confirm your order. The rest on delivery.
+                                        <% } else { %>
+                                            Pay fully upon delivery.
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </label>
+                            <% } %>
+
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg btn-block" id="payBtn">
+                        <i class="fas fa-lock"></i> Pay Securely
+                    </button>
+                </form>
+            </div>
+
+            <!-- Order Summary Sidebar -->
+            <div class="checkout-summary">
+                <h3 class="summary-title">Order Summary</h3>
+                <div class="checkout-items" id="checkoutItems">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span id="checkoutSubtotal">₹0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Savings</span>
+                    <span class="savings-text" id="checkoutSavings">-₹0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Delivery</span>
+                    <span id="checkoutDelivery">₹0</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-row summary-total">
+                    <span>Total Payable</span>
+                    <span id="checkoutTotal">₹0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Razorpay -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        renderCheckoutSummary();
+    });
+
+    function renderCheckoutSummary() {
+        const cart = getCart();
+        if (!cart || cart.length === 0) {
+            window.location.href = '/cart';
+            return;
+        }
+
+        const container = document.getElementById('checkoutItems');
+        let html = '';
+        let subtotal = 0;
+        let totalSavings = 0;
+
+        cart.forEach(item => {
+            const itemTotal = item.salePrice * item.quantity;
+            subtotal += itemTotal;
+            totalSavings += (item.originalPrice - item.salePrice) * item.quantity;
+
+            html += `
+                <div class="checkout-item">
+                    <div class="checkout-item-img">
+                        ${item.image ? `<img src="${item.image}" alt="${item.name}">` : '<i class="fas fa-image"></i>'}
+                    </div>
+                    <div class="checkout-item-info">
+                        <span class="checkout-item-name">${item.name}</span>
+                        <span class="checkout-item-qty">Qty: ${item.quantity}</span>
+                    </div>
+                    <span class="checkout-item-price">₹${itemTotal.toLocaleString('en-IN')}</span>
+                </div>
+            `;
+        });
+
+        // Use global dynamic delivery charge
+        let total = subtotal + window.deliveryCharge;
+
+        // Apply saved coupon if exists
+        const savedCoupon = getSavedCoupon();
+        if (savedCoupon && savedCoupon.discountPercent) {
+            const couponDiscount = Math.round((subtotal * savedCoupon.discountPercent) / 100);
+            total -= couponDiscount;
+            
+            html += `
+                <div class="summary-divider"></div>
+                <div class="summary-row">
+                    <span>Coupon <small style="color: var(--primary);">(${savedCoupon.code})</small></span>
+                    <span class="savings-text">-₹${couponDiscount.toLocaleString('en-IN')}</span>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+
+        document.getElementById('checkoutSubtotal').textContent = `₹${subtotal.toLocaleString('en-IN')}`;
+        document.getElementById('checkoutSavings').textContent = `-₹${totalSavings.toLocaleString('en-IN')}`;
+        document.getElementById('checkoutDelivery').innerHTML = window.deliveryCharge === 0 && subtotal >= 999 ? '<span style="color:var(--success);">FREE</span>' : `₹${window.deliveryCharge}`;
+        document.getElementById('checkoutTotal').textContent = `₹${total.toLocaleString('en-IN')}`;
+    }
+
+    window.deliveryCharge = 99; // Default base delivery
+    let geocodeTimeout = null;
+
+    // Helper: Haversine distance
+    function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+        const R = 6371; 
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    async function calculateDeliveryCharge() {
+        const pincode = document.getElementById('pincode').value;
+        const city = document.getElementById('city').value;
+        const state = document.getElementById('state').value;
+
+        if (!pincode || pincode.length < 6) return;
+
+        // Origin: Delhi (Example origin)
+        const originLat = 28.6139;
+        const originLon = 77.2090;
+
+        document.getElementById('checkoutDelivery').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        try {
+            const query = `${pincode}, ${city}, ${state}, India`;
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`, {
+                headers: { 'Accept-Language': 'en' }
+            });
+            const data = await res.json();
+
+            if (data && data.length > 0) {
+                const destLat = parseFloat(data[0].lat);
+                const destLon = parseFloat(data[0].lon);
+                const distKm = getDistanceFromLatLonInKm(originLat, originLon, destLat, destLon);
+                
+                // Delivery logic: ₹40 base + ₹2 per km. Free over ₹999 within 50km
+                let charge = Math.round(40 + (distKm * 2));
+                
+                const subtotalText = document.getElementById('checkoutSubtotal').textContent.replace(/[^\d]/g, '');
+                if (parseInt(subtotalText) >= 999 && distKm <= 50) {
+                    charge = 0;
+                }
+                
+                window.deliveryCharge = charge;
+            } else {
+                // Fallback
+                window.deliveryCharge = 99;
+            }
+        } catch (e) {
+            console.error("Geocoding failed", e);
+            window.deliveryCharge = 99; // Fallback
+        }
+        
+        renderCheckoutSummary();
+    }
+
+    function scheduleDeliveryCalculation() {
+        clearTimeout(geocodeTimeout);
+        geocodeTimeout = setTimeout(calculateDeliveryCharge, 1500); // 1.5s debounce
+    }
+
+    document.getElementById('pincode').addEventListener('input', scheduleDeliveryCalculation);
+    document.getElementById('city').addEventListener('input', scheduleDeliveryCalculation);
+
+    function getSavedCoupon() {
+        try {
+            return JSON.parse(localStorage.getItem('geetakalp_coupon'));
+        } catch { return null; }
+    }
+
+    let checkoutUser = null;
+    let hasSavedAddress = false;
+
+    // Listen to Firebase Auth state specifically for checkout auto-fill
+    firebase.auth().onAuthStateChanged(async (user) => {
+        checkoutUser = user;
+        if (user) {
+            // Fill name and email if available
+            if (user.displayName) document.getElementById('custName').value = user.displayName;
+            if (user.email) document.getElementById('custEmail').value = user.email;
+
+            // Fetch saved address
+            try {
+                const snapshot = await firebase.database().ref(`customers/${user.uid}/profile`).once('value');
+                const profile = snapshot.val();
+                if (profile) {
+                    if (profile.phone) document.getElementById('custPhone').value = profile.phone;
+                    if (profile.address) document.getElementById('address').value = profile.address;
+                    if (profile.city) document.getElementById('city').value = profile.city;
+                    if (profile.state) document.getElementById('state').value = profile.state;
+                    if (profile.pincode) document.getElementById('pincode').value = profile.pincode;
+                    
+                    if (profile.address && profile.city && profile.state && profile.pincode) {
+                        hasSavedAddress = true;
+                        hideAddressForm();
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch address", err);
+            }
+        }
+    });
+
+    function hideAddressForm() {
+        document.getElementById('addressFormWrap').style.display = 'none';
+        document.getElementById('savedAddressSummary').style.display = 'block';
+        document.getElementById('editAddressBtn').style.display = 'inline-block';
+        
+        // Populate summary
+        document.getElementById('summaryName').textContent = document.getElementById('custName').value || 'Customer';
+        document.getElementById('summaryPhone').textContent = document.getElementById('custPhone').value;
+        document.getElementById('summaryFullAddress').textContent = 
+            `${document.getElementById('address').value}, ${document.getElementById('city').value}, ${document.getElementById('state').value} - ${document.getElementById('pincode').value}`;
+            
+        // Calculate dynamic delivery based on this saved address
+        scheduleDeliveryCalculation();
+    }
+
+    function showAddressForm() {
+        document.getElementById('addressFormWrap').style.display = 'block';
+        document.getElementById('savedAddressSummary').style.display = 'none';
+        document.getElementById('editAddressBtn').style.display = 'none';
+    }
+
+    function updatePaymentBtn() {
+        const paymentRadio = document.querySelector('input[name="paymentMode"]:checked');
+        const paymentMode = paymentRadio ? paymentRadio.value : 'online';
+        const btn = document.getElementById('payBtn');
+        const codAdvancePercent = parseInt('<%= (paymentSettings && paymentSettings.codAdvancePercent) ? paymentSettings.codAdvancePercent : 0 %>') || 0;
+        
+        if (paymentMode === 'online') {
+            btn.innerHTML = '<i class="fas fa-lock"></i> Pay Securely';
+        } else if (paymentMode === 'cod') {
+            if (codAdvancePercent > 0) {
+                btn.innerHTML = `<i class="fas fa-lock"></i> Pay ${codAdvancePercent}% Advance & Place Order`;
+            } else {
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> Place Order (COD)';
+            }
+        }
+    }
+
+    // Call once on load to set initial text
+    document.addEventListener('DOMContentLoaded', () => {
+        updatePaymentBtn();
+    });
+
+    async function processCheckout(e) {
+        e.preventDefault();
+        const btn = document.getElementById('payBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+        const cart = getCart();
+        if (!cart || cart.length === 0) {
+            window.location.href = '/cart';
+            return;
+        }
+
+        let subtotal = 0;
+        cart.forEach(item => subtotal += item.salePrice * item.quantity);
+        const delivery = subtotal >= 999 ? 0 : 99;
+        let total = subtotal + delivery;
+
+        const savedCoupon = getSavedCoupon();
+        let appliedCouponInfo = null;
+        if (savedCoupon && savedCoupon.discountPercent) {
+            const couponDiscount = Math.round((subtotal * savedCoupon.discountPercent) / 100);
+            total -= couponDiscount;
+            appliedCouponInfo = { code: savedCoupon.code, discount: couponDiscount };
+        }
+
+        const customerInfo = {
+            name: document.getElementById('custName').value,
+            email: document.getElementById('custEmail').value,
+            phone: document.getElementById('custPhone').value,
+            address: document.getElementById('address').value,
+            city: document.getElementById('city').value,
+            state: document.getElementById('state').value,
+            pincode: document.getElementById('pincode').value
+        };
+
+        // If user is logged in, update their profile with the latest address
+        if (checkoutUser) {
+            try {
+                await firebase.database().ref(`customers/${checkoutUser.uid}/profile`).set(customerInfo);
+            } catch (err) {
+                console.error("Failed to save address to profile", err);
+            }
+        }
+
+        try {
+            // Determine Payment Mode & Amount
+            const paymentRadio = document.querySelector('input[name="paymentMode"]:checked');
+            const paymentMode = paymentRadio ? paymentRadio.value : 'online';
+            
+            let amountToPayNow = total;
+            // EJS injection for advance percent
+            const codAdvancePercent = parseInt('<%= (paymentSettings && paymentSettings.codAdvancePercent) ? paymentSettings.codAdvancePercent : 0 %>') || 0;
+            
+            if (paymentMode === 'cod') {
+                if (codAdvancePercent > 0) {
+                    amountToPayNow = Math.round(total * (codAdvancePercent / 100));
+                } else {
+                    amountToPayNow = 0;
+                }
+            }
+
+            // Create order on server
+            const response = await fetch('/api/create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: total,
+                    amountToPayNow: amountToPayNow,
+                    paymentMethod: paymentMode,
+                    currency: 'INR',
+                    customerInfo,
+                    coupon: appliedCouponInfo,
+                    items: cart.map(item => ({
+                        id: item.id,
+                        name: item.name,
+                        price: item.salePrice,
+                        quantity: item.quantity
+                    }))
+                })
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to create order');
+            }
+
+            // Check if payment is required (e.g. 100% COD bypasses Razorpay)
+            if (!data.requiresPayment) {
+                clearCart();
+                window.location.href = `/order-success?orderId=${data.orderId}`;
+                return;
+            }
+
+            // Open Razorpay
+            const razorpayKeyId = '<%= razorpayKeyId %>';
+            
+            if (!razorpayKeyId || razorpayKeyId === 'your_razorpay_key_id') {
+                // Demo mode - simulate success
+                showToast('Demo mode: Simulating payment success');
+                clearCart();
+                window.location.href = `/order-success?orderId=${data.orderId}`;
+                return;
+            }
+
+            const options = {
+                key: razorpayKeyId,
+                amount: data.amount,
+                currency: data.currency,
+                name: 'Geeta Kalp',
+                description: 'Purchase from Geeta Kalp',
+                order_id: data.razorpayOrderId,
+                prefill: {
+                    name: customerInfo.name,
+                    email: customerInfo.email,
+                    contact: customerInfo.phone
+                },
+                theme: { color: '#6c3ce0' },
+                handler: async function(response) {
+                    // Verify payment
+                    const verifyRes = await fetch('/api/verify-payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            orderId: data.orderId
+                        })
+                    });
+
+                    const verifyData = await verifyRes.json();
+                    if (verifyData.success) {
+                        clearCart();
+                        window.location.href = `/order-success?orderId=${data.orderId}`;
+                    } else {
+                        showToast('Payment verification failed. Please contact support.', 'error');
+                    }
+                },
+                modal: {
+                    ondismiss: function() {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-lock"></i> Pay Securely';
+                    }
+                }
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.open();
+
+        } catch (error) {
+            console.error('Checkout error:', error);
+            showToast(error.message || 'Checkout failed. Please try again.', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-lock"></i> Pay Securely';
+        }
+    }
+</script>
+
+<%- include('partials/footer') %>

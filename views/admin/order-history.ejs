@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script>
+        const firebaseConfig = <%- JSON.stringify(firebaseConfig) %>;
+        if (firebaseConfig.apiKey && firebaseConfig.apiKey !== 'your_api_key_here') {
+            firebase.initializeApp(firebaseConfig);
+        }
+    </script>
+</head>
+<body class="admin-body">
+    <!-- Admin Sidebar -->
+    <%- include('../partials/admin-sidebar', { activePage: 'order-history' }) %>
+
+    <main class="admin-main">
+        <header class="admin-header">
+            <button class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+            <h2 class="admin-page-title">Order History</h2>
+        </header>
+        <div class="admin-content">
+            <div class="admin-section">
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th><th>Customer</th><th>Phone</th>
+                                <th>Items</th><th>Amount</th><th>Status</th>
+                                <th>Date Completed</th><th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersBody">
+                            <tr><td colspan="8" class="table-empty">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentToken = '';
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            currentToken = localStorage.getItem('adminToken');
+            if (!currentToken) {
+                window.location.href = '/admin/login';
+                return;
+            }
+            loadOrders();
+        });
+
+        async function loadOrders() {
+            try {
+                const res = await fetch('/api/orders', { headers: { 'Authorization': `Bearer ${currentToken}` } });
+                const data = await res.json();
+                const tbody = document.getElementById('ordersBody');
+                
+                const historyOrders = data.orders.filter(o => o.status === 'delivered' || o.status === 'cancelled');
+                
+                if (!data.success || historyOrders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="table-empty">No history available</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = historyOrders.map(o => {
+                    const total = o.amount || 0;
+                    
+                    let statusColor = '#9ca3af'; // cancelled
+                    let statusBg = 'rgba(156,163,175,0.1)';
+                    if (o.status === 'delivered') { statusColor = 'var(--success)'; statusBg = 'rgba(16,185,129,0.1)'; }
+
+                    const completedDate = o.deliveredAt ? new Date(o.deliveredAt).toLocaleDateString('en-IN') : (o.updatedAt ? new Date(o.updatedAt).toLocaleDateString('en-IN') : new Date(o.createdAt).toLocaleDateString('en-IN'));
+
+                    return `
+                    <tr>
+                        <td><code>${o.id.substring(0,12)}...</code></td>
+                        <td>${o.customerInfo?.name || 'N/A'}<br><small>${o.customerInfo?.email || ''}</small></td>
+                        <td>${o.customerInfo?.phone || 'N/A'}</td>
+                        <td>${o.items ? o.items.map(i => `${i.name} x${i.quantity}`).join('<br>') : 'N/A'}</td>
+                        <td><strong>₹${total.toLocaleString('en-IN')}</strong></td>
+                        <td>
+                            <span style="display: inline-block; padding: 4px 10px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; background: ${statusBg}; color: ${statusColor}; text-transform: capitalize;">${o.status}</span>
+                        </td>
+                        <td>${completedDate}</td>
+                        <td>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn-icon" onclick="viewOrderDetails('${o.id}')" title="View Details"><i class="fas fa-eye"></i></button>
+                                <button class="btn-icon btn-danger" onclick="deleteOrder('${o.id}')" title="Delete Order"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `}).join('');
+            } catch (error) { console.error('Load orders error:', error); }
+        }
+
+        async function deleteOrder(id) {
+            if(!confirm('Delete this order permanently? This action cannot be undone.')) return;
+            try {
+                await fetch(`/api/orders/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                loadOrders();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function closeOrderModal() {
+            document.getElementById('adminOrderModal').style.display = 'none';
+        }
+
+        async function viewOrderDetails(id) {
+            try {
+                const res = await fetch('/api/orders', { headers: { 'Authorization': `Bearer ${currentToken}` } });
+                const data = await res.json();
+                const order = data.orders.find(o => o.id === id);
+                if (!order) return alert('Order not found');
+
+                document.getElementById('mOrderId').textContent = id;
+                document.getElementById('mDate').textContent = new Date(order.createdAt).toLocaleString('en-IN');
+                document.getElementById('mStatus').textContent = order.status.toUpperCase();
+                
+                document.getElementById('mCustomer').innerHTML = `
+                    <strong>${order.customerInfo.name}</strong><br>
+                    ${order.customerInfo.email}<br>
+                    ${order.customerInfo.phone}<br>
+                    <small style="color: var(--text-muted);">${order.customerInfo.address}, ${order.customerInfo.city}, ${order.customerInfo.state} - ${order.customerInfo.pincode}</small>
+                `;
+
+                const itemsHtml = (order.items || []).map(i => `
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+                        <span>${i.name} (x${i.quantity})</span>
+                        <strong>₹${(i.price * i.quantity).toLocaleString('en-IN')}</strong>
+                    </div>
+                `).join('');
+                document.getElementById('mItems').innerHTML = itemsHtml;
+
+                const total = order.amount || 0;
+                document.getElementById('mTotal').textContent = `₹${total.toLocaleString('en-IN')}`;
+                document.getElementById('mMethod').textContent = order.paymentMethod ? order.paymentMethod.toUpperCase() : 'ONLINE';
+                
+                const paid = order.amountPaidOnline !== undefined ? order.amountPaidOnline : (order.status === 'created' ? 0 : (order.paymentMethod === 'cod' ? 0 : total));
+                const paidCOD = order.status === 'delivered' ? Math.max(0, total - paid) : 0;
+                const pending = Math.max(0, total - paid - paidCOD);
+                
+                let breakHtml = `
+                    <div style="display: flex; justify-content: space-between; color: var(--success); margin-top: 4px;"><span>Paid Online:</span> <span>₹${paid.toLocaleString('en-IN')}</span></div>
+                    ${paidCOD > 0 ? `<div style="display: flex; justify-content: space-between; color: var(--success); margin-top: 4px;"><span>Collected COD:</span> <span>₹${paidCOD.toLocaleString('en-IN')}</span></div>` : ''}
+                    ${pending > 0 ? `<div style="display: flex; justify-content: space-between; color: var(--danger); margin-top: 4px;"><span>Pending COD:</span> <span>₹${pending.toLocaleString('en-IN')}</span></div>` : ''}
+                `;
+                document.getElementById('mBreakdown').innerHTML = breakHtml;
+
+                document.getElementById('adminOrderModal').style.display = 'flex';
+            } catch (err) {
+                console.error(err);
+                alert('Error loading order details');
+            }
+        }
+
+        function adminLogout() { 
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminEmail');
+            window.location.href = '/admin/login'; 
+        }
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            document.getElementById('adminSidebar').classList.toggle('collapsed');
+        });
+    </script>
+
+    <!-- Admin Order Details Modal -->
+    <div id="adminOrderModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 24px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 16px; margin-bottom: 16px;">
+                <h3 style="margin: 0;">Order Details</h3>
+                <button onclick="closeOrderModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="font-size: 0.9rem;">
+                <p><strong>Order ID:</strong> <span id="mOrderId"></span></p>
+                <p><strong>Date:</strong> <span id="mDate"></span></p>
+                <p><strong>Status:</strong> <span id="mStatus"></span></p>
+                
+                <h4 style="margin: 16px 0 8px;">Customer</h4>
+                <div id="mCustomer" style="background: #f9f9f9; padding: 12px; border-radius: 4px;"></div>
+                
+                <h4 style="margin: 16px 0 8px;">Items</h4>
+                <div id="mItems" style="background: #f9f9f9; padding: 12px; border-radius: 4px;"></div>
+                
+                <h4 style="margin: 16px 0 8px;">Payment</h4>
+                <div style="background: #f9f9f9; padding: 12px; border-radius: 4px;">
+                    <div style="display: flex; justify-content: space-between;"><span>Method:</span> <strong id="mMethod"></strong></div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 4px;"><span>Total:</span> <strong id="mTotal"></strong></div>
+                    <div id="mBreakdown" style="border-top: 1px solid #ddd; margin-top: 8px; padding-top: 8px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

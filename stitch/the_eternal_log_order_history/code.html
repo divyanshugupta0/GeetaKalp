@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Eb+Garamond:ital,wght@0,400..800;1,400..800&amp;family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&amp;family=Cormorant+Garamond:wght@300;400;500&amp;family=Jost:wght@200;300;400&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom Overrides for Brand specific fonts mentioned in the task */
+        .font-cormorant { font-family: 'Cormorant Garamond', serif; }
+        .font-jost { font-family: 'Jost', sans-serif; }
+        
+        /* Organic Fluid Mask for images */
+        .organic-mask {
+            mask-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path d="M44.7,-76.4C58.1,-69.2,69.2,-56.1,76.5,-41.3C83.8,-26.5,87.3,-10.1,85.1,5.4C82.9,20.8,75,35.2,64.8,47.3C54.6,59.3,42.1,69,28.2,74.5C14.3,80,-0.9,81.4,-15.8,78.2C-30.7,75,-45.3,67.2,-57.4,56C-69.5,44.8,-79.1,30.2,-82.9,14.4C-86.7,-1.4,-84.7,-18.3,-77.1,-32.8C-69.5,-47.3,-56.3,-59.4,-41.8,-66.1C-27.3,-72.8,-11.5,-74.1,3.4,-79.3C18.3,-84.5,31.3,-83.5,44.7,-76.4Z" transform="translate(100 100)" fill="black"/></svg>');
+            mask-size: contain;
+            mask-repeat: no-repeat;
+            mask-position: center;
+            -webkit-mask-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path d="M44.7,-76.4C58.1,-69.2,69.2,-56.1,76.5,-41.3C83.8,-26.5,87.3,-10.1,85.1,5.4C82.9,20.8,75,35.2,64.8,47.3C54.6,59.3,42.1,69,28.2,74.5C14.3,80,-0.9,81.4,-15.8,78.2C-30.7,75,-45.3,67.2,-57.4,56C-69.5,44.8,-79.1,30.2,-82.9,14.4C-86.7,-1.4,-84.7,-18.3,-77.1,-32.8C-69.5,-47.3,-56.3,-59.4,-41.8,-66.1C-27.3,-72.8,-11.5,-74.1,3.4,-79.3C18.3,-84.5,31.3,-83.5,44.7,-76.4Z" transform="translate(100 100)" fill="black"/></svg>');
+            -webkit-mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+        }
+
+        .slow-gradient-bg {
+            background: radial-gradient(circle at 10% 20%, rgba(22, 156, 51, 0.05) 0%, transparent 40%),
+                        radial-gradient(circle at 90% 80%, rgba(170, 38, 91, 0.03) 0%, transparent 40%),
+                        #f6f8f6;
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-tint": "#006e1e",
+                    "on-tertiary-container": "#fffbff",
+                    "tertiary-container": "#ca4174",
+                    "tertiary": "#aa265b",
+                    "surface-container-low": "#eff6e9",
+                    "on-primary-container": "#f7fff1",
+                    "on-primary-fixed-variant": "#005315",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed-variant": "#3a4b3d",
+                    "secondary": "#516353",
+                    "primary-fixed-dim": "#66df6c",
+                    "on-surface": "#171d15",
+                    "tertiary-fixed": "#ffd9e1",
+                    "secondary-container": "#d4e8d4",
+                    "on-surface-variant": "#3e4a3c",
+                    "divider": "rgba(17, 33, 21, 0.1)",
+                    "error": "#ba1a1a",
+                    "on-primary-fixed": "#002204",
+                    "surface-variant": "#dde5d8",
+                    "primary-fixed": "#83fc86",
+                    "glass-surface": "rgba(255, 255, 255, 0.8)",
+                    "surface": "#f4fcee",
+                    "on-error-container": "#93000a",
+                    "inverse-on-surface": "#ecf3e6",
+                    "primary-container": "#008727",
+                    "primary": "#006b1d",
+                    "outline-variant": "#bdcab8",
+                    "on-primary": "#ffffff",
+                    "background": "#f4fcee",
+                    "surface-dim": "#d5dccf",
+                    "on-secondary": "#ffffff",
+                    "inverse-surface": "#2b3229",
+                    "surface-container": "#e9f0e3",
+                    "background-dark": "#112115",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-fixed-variant": "#8d0846",
+                    "glass-border": "rgba(255, 255, 255, 1.0)",
+                    "on-background": "#171d15",
+                    "on-tertiary-fixed": "#3f001b",
+                    "tertiary-fixed-dim": "#ffb1c5",
+                    "background-light": "#f6f8f6",
+                    "surface-bright": "#f4fcee",
+                    "on-secondary-fixed": "#0f1f13",
+                    "outline": "#6e7b6a",
+                    "inverse-primary": "#66df6c",
+                    "secondary-fixed": "#d4e8d4",
+                    "on-secondary-container": "#576959",
+                    "secondary-fixed-dim": "#b8ccb9",
+                    "error-container": "#ffdad6",
+                    "surface-container-highest": "#dde5d8",
+                    "surface-container-high": "#e3eadd",
+                    "on-error": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "section-margin": "48px",
+                    "element-gap": "12px",
+                    "container-padding": "24px",
+                    "stack-gap": "32px"
+            },
+            "fontFamily": {
+                    "label-sm": ["Plus Jakarta Sans"],
+                    "label-caps": ["Plus Jakarta Sans"],
+                    "display-sm": ["Eb Garamond"],
+                    "display-md": ["Eb Garamond"],
+                    "display-lg": ["Eb Garamond"],
+                    "body-md": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "label-sm": ["12px", {"lineHeight": "1", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "500"}],
+                    "display-sm": ["20px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                    "display-md": ["30px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                    "display-lg": ["36px", {"lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+</head>
+<body class="slow-gradient-bg min-h-screen flex flex-col font-jost text-on-surface">
+<!-- TopNavBar -->
+<nav class="bg-glass-surface/80 dark:bg-background-dark/80 backdrop-blur-md text-primary dark:text-primary-fixed docked full-width top-0 sticky border-b border-glass-border/20 shadow-sm z-50">
+<div class="flex justify-between items-center w-full px-container-padding py-4 max-w-7xl mx-auto">
+<div class="font-display-md text-display-md text-primary dark:text-primary-fixed-dim italic">Organic Ethereal</div>
+<div class="hidden md:flex items-center gap-8 font-display-sm text-display-sm tracking-wide">
+<a class="text-on-surface-variant/70 dark:text-on-surface-variant/60 hover:text-primary dark:hover:text-primary-fixed transition-colors duration-300" href="#">Sanctuary</a>
+<a class="text-on-surface-variant/70 dark:text-on-surface-variant/60 hover:text-primary dark:hover:text-primary-fixed transition-colors duration-300" href="#">Apothecary</a>
+</div>
+<div class="flex items-center gap-6">
+<button class="material-symbols-outlined text-secondary transition-colors hover:text-primary">shopping_cart</button>
+<button class="material-symbols-outlined text-primary border-b border-primary/40 pb-1">person</button>
+</div>
+</div>
+</nav>
+<!-- Main Content: The Eternal Log -->
+<main class="flex-grow flex items-center justify-center px-container-padding py-section-margin">
+<div class="w-full max-w-5xl bg-white/40 backdrop-blur-[16px] border border-white/60 rounded-xl overflow-hidden shadow-sm">
+<!-- Header Section -->
+<header class="p-stack-gap text-center space-y-2">
+<h1 class="font-cormorant text-5xl font-light tracking-tight text-primary">The Eternal Log</h1>
+<p class="font-jost text-sm uppercase tracking-[0.3em] text-secondary/60">A Chronicle of your Past Rituals</p>
+<div class="w-12 h-[1px] bg-primary/20 mx-auto mt-6"></div>
+</header>
+<!-- Orders Table/List -->
+<div class="px-container-padding pb-stack-gap">
+<div class="space-y-6">
+<!-- Order Card 1 -->
+<div class="group relative bg-white/20 hover:bg-white/40 transition-all duration-500 rounded-lg p-6 border border-transparent hover:border-white/50">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+<!-- Date & ID -->
+<div class="flex flex-col gap-1 min-w-[140px]">
+<span class="font-jost text-xs uppercase tracking-widest text-secondary/50">Timestamp</span>
+<span class="font-cormorant text-xl text-on-surface">12th Moon, 2024</span>
+<span class="font-jost text-[10px] text-primary/60 tracking-tighter">#ETHR-8821</span>
+</div>
+<!-- Items Display -->
+<div class="flex flex-grow items-center gap-4">
+<div class="flex -space-x-4">
+<div class="w-14 h-14 organic-mask overflow-hidden border border-white/40 shadow-sm bg-surface-container">
+<img alt="Essence of Sage" class="w-full h-full object-cover" data-alt="A macro photograph of a botanical elixir bottle in a soft-focus forest setting. The lighting is ethereal and high-key with sage green undertones. A delicate glass dropper rests beside a pool of clear essential oil, embodying a minimalist luxury wellness aesthetic with soft depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7gasfcwWsfDrUudpcygzeCz2h7u1rv4nc0GGcM1fxvAKBYwMfjPp3ibI4movgbWaP4Zs6vBaOKkBMb8q0bUJ0dQXcvhjo0vfNDxCqLpJpe_B-YFIwL9F6cyHDJCu6ptydAx9xTqTioTISY8_1NW95EBOacwOXfrtJE76K-jU4TpxmVw-UAAxd_zMXtIeI04mSBa6q4FONDEPh23yymJCujZaQ6MuMZE0CFaUwtzj2haNXtxuWs5cpwZgGHhw6CM7tZ0h5pkzRpTY"/>
+</div>
+<div class="w-14 h-14 organic-mask overflow-hidden border border-white/40 shadow-sm bg-surface-container">
+<img alt="Lunar Salt" class="w-full h-full object-cover" data-alt="A minimalist arrangement of hand-harvested lavender sprigs and a ceramic bowl filled with fine white salts. The scene is illuminated by soft, diffused morning light, creating a serene, meditative mood. The palette consists of muted clay, pale lavender, and alabaster sand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9QEse1Uec0PKxqLFFcLBPO-axMN8lHUGrEBsFdQmA_TDHG9S18DPBkn0eUUEMrRLCQkGmg319UonlOaAKLvy44VQeWBeGk2Nt-tpX1ivJGTLd7LLcLVWooVBCRVt45RcGQBaTZHblvjyNpQoWUCu5Ha7UeExKF0yM0n9WDM9zXEFBpwwcmFsUtrvBeoAglxbLs_Nw_0FZdVHjusXl1gEesDdIamsWJ9nyb-xx33Lvktgva62j2QtEtFXUSinAOdQ0YJZ9Zij_Nxg"/>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-cormorant text-lg">Essence of Sage &amp; Lunar Salt</span>
+<span class="font-jost text-[11px] text-secondary/40 italic">+ 1 more ritual item</span>
+</div>
+</div>
+<!-- Status & Value -->
+<div class="flex flex-col md:items-end gap-1 min-w-[120px]">
+<span class="font-jost text-xs uppercase tracking-widest text-secondary/50">Status</span>
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span class="font-jost text-sm text-primary tracking-wide italic">En Route</span>
+</div>
+<span class="font-cormorant text-xl mt-1">$142.00</span>
+</div>
+<!-- Actions -->
+<div class="flex flex-col gap-2">
+<button class="px-6 py-2 rounded-full border border-primary/20 text-primary text-[10px] uppercase tracking-widest hover:bg-primary hover:text-white transition-all duration-300 font-medium">Track Essence</button>
+<button class="px-6 py-2 rounded-full text-secondary text-[10px] uppercase tracking-widest hover:text-primary transition-all duration-300">View Ritual Details</button>
+</div>
+</div>
+</div>
+<div class="h-[1px] w-full bg-divider/10"></div>
+<!-- Order Card 2 -->
+<div class="group relative bg-white/20 hover:bg-white/40 transition-all duration-500 rounded-lg p-6 border border-transparent hover:border-white/50">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div class="flex flex-col gap-1 min-w-[140px]">
+<span class="font-jost text-xs uppercase tracking-widest text-secondary/50">Timestamp</span>
+<span class="font-cormorant text-xl text-on-surface">4th Moon, 2024</span>
+<span class="font-jost text-[10px] text-primary/60 tracking-tighter">#ETHR-7712</span>
+</div>
+<div class="flex flex-grow items-center gap-4">
+<div class="flex">
+<div class="w-14 h-14 organic-mask overflow-hidden border border-white/40 shadow-sm bg-surface-container">
+<img alt="Cleansing Dew" class="w-full h-full object-cover" data-alt="A high-end white ceramic pump bottle for skincare, sitting on a translucent glass surface with soft water ripple shadows. The mood is exceptionally clean and airy, using a palette of soft whites and very faint sage greens. The lighting is bright and ethereal, suggesting premium organic quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbgv9ZiXzUEYslMc4X1LsSFcVbVPtMVq9dETYj6sK5r8IZurUovSvLqoBsqgrElhCvGk83RLkFZvmRLkHs5KpRgXhchc4bD8Dqxvjo-juFp4jUWM6tMGnn3-EA-mDpfrXAifULiVNhNgXu9ybRsIktZkyhqDsGMOMAwHP80obz5rVBNJv6TRRtehRMD2WlLGynBJLsdItOLT7V8DrB-AOxN6P4PgzqRYeJg26qYdxZvck2aAd1GXdeQ5yDNwo45l2SwcXeyLYLPdo"/>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-cormorant text-lg">Cleansing Dew Ritual Set</span>
+<span class="font-jost text-[11px] text-secondary/40 italic">Singular vessel</span>
+</div>
+</div>
+<div class="flex flex-col md:items-end gap-1 min-w-[120px]">
+<span class="font-jost text-xs uppercase tracking-widest text-secondary/50">Status</span>
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary/30"></span>
+<span class="font-jost text-sm text-secondary/60 tracking-wide italic">Delivered</span>
+</div>
+<span class="font-cormorant text-xl mt-1">$89.00</span>
+</div>
+<div class="flex flex-col gap-2">
+<button class="px-6 py-2 rounded-full border border-secondary/20 text-secondary text-[10px] uppercase tracking-widest hover:bg-secondary hover:text-white transition-all duration-300 font-medium">Re-Order</button>
+<button class="px-6 py-2 rounded-full text-secondary text-[10px] uppercase tracking-widest hover:text-primary transition-all duration-300">View Ritual Details</button>
+</div>
+</div>
+</div>
+<div class="h-[1px] w-full bg-divider/10"></div>
+<!-- Order Card 3 -->
+<div class="group relative bg-white/20 hover:bg-white/40 transition-all duration-500 rounded-lg p-6 border border-transparent hover:border-white/50">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6 opacity-70">
+<div class="flex flex-col gap-1 min-w-[140px]">
+<span class="font-jost text-xs uppercase tracking-widest text-secondary/50">Timestamp</span>
+<span class="font-cormorant text-xl text-on-surface">1st Moon, 2024</span>
+<span class="font-jost text-[10px] text-primary/60 tracking-tighter">#ETHR-6500</span>
+</div>
+<div class="flex flex-grow items-center gap-4">
+<div class="flex -space-x-4">
+<div class="w-14 h-14 organic-mask overflow-hidden border border-white/40 shadow-sm bg-surface-container">
+<img alt="Dusk Candle" class="w-full h-full object-cover" data-alt="A delicate glass candle with a tiny wooden wick, emitting a soft warm glow against a pale clay background. Wisps of white smoke curl gracefully into the air. The aesthetic is extremely minimal, focusing on texture and light-mode serenity with a soft, ethereal atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2VZj9MZbAlugpXLmPTGZS6VmgmQJfK1azj62sw_o9O_JAGqsh-ar9HtThJtgA3s8mrQOJn2HkmLi2CYU4zzJTHeyZWygFX2FakQtMTYs_bB7PVTjy7J34hU9wGQSi7BJtfA5HFUdKFzggMGPFTgMPpq3XfyT4zjQGxs_YDvfE1afYZfQt9j_vYR6VdOk1sNv2c9SupSRw8jjjyRvabfHo7eUdKf8iL_jy4jF63KF1TWzDr5LWkxUNpOPClHSDR8gtGjJtvwOKH0o"/>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-cormorant text-lg">Dusk Taper Candle</span>
+<span class="font-jost text-[11px] text-secondary/40 italic">Set of three</span>
+</div>
+</div>
+<div class="flex flex-col md:items-end gap-1 min-w-[120px]">
+<span class="font-jost text-xs uppercase tracking-widest text-secondary/50">Status</span>
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary/40"></span>
+<span class="font-jost text-sm text-tertiary tracking-wide italic">Manifesting</span>
+</div>
+<span class="font-cormorant text-xl mt-1">$55.00</span>
+</div>
+<div class="flex flex-col gap-2">
+<button class="px-6 py-2 rounded-full border border-primary/10 text-secondary text-[10px] uppercase tracking-widest cursor-not-allowed font-medium">Processing</button>
+<button class="px-6 py-2 rounded-full text-secondary text-[10px] uppercase tracking-widest hover:text-primary transition-all duration-300">View Ritual Details</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Empty Space Footer of Card -->
+<div class="p-12 text-center">
+<p class="font-jost text-[11px] uppercase tracking-[0.4em] text-secondary/30">End of Record</p>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest dark:bg-background-dark full-width py-stack-gap border-t border-divider flex flex-col md:flex-row justify-between items-center px-container-padding gap-element-gap">
+<div class="font-display-sm text-display-sm text-on-surface">Organic Ethereal</div>
+<div class="font-label-sm text-label-sm uppercase tracking-[0.2em] font-light text-secondary dark:text-secondary-fixed">
+            © 2024 Organic Ethereal. Crafted for Ritual.
+        </div>
+<div class="flex gap-6">
+<a class="font-label-sm text-label-sm uppercase tracking-[0.2em] font-light text-on-surface-variant/50 hover:text-primary dark:hover:text-primary-fixed transition-opacity" href="#">Sustainability</a>
+<a class="font-label-sm text-label-sm uppercase tracking-[0.2em] font-light text-on-surface-variant/50 hover:text-primary dark:hover:text-primary-fixed transition-opacity" href="#">Shipping</a>
+<a class="font-label-sm text-label-sm uppercase tracking-[0.2em] font-light text-on-surface-variant/50 hover:text-primary dark:hover:text-primary-fixed transition-opacity" href="#">Returns</a>
+<a class="font-label-sm text-label-sm uppercase tracking-[0.2em] font-light text-on-surface-variant/50 hover:text-primary dark:hover:text-primary-fixed transition-opacity" href="#">Privacy</a>
+</div>
+</footer>
+</body></html>

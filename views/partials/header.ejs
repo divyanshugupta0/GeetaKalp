@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <meta name="description" content="<%= metaDescription %>">
+    <% if (typeof canonicalUrl !== 'undefined') { %>
+    <link rel="canonical" href="<%= canonicalUrl %>">
+    <% } %>
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="<%= title %>">
+    <meta property="og:description" content="<%= metaDescription %>">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Geeta Kalp">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Plus+Jakarta+Sans:wght@200..800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/styles.css">
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = <%- JSON.stringify(firebaseConfig) %>;
+        if (firebaseConfig.apiKey && firebaseConfig.apiKey !== 'your_api_key_here') {
+            firebase.initializeApp(firebaseConfig);
+        }
+    </script>
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="container top-bar-inner">
+            <span><i class="fas fa-truck"></i> Free Shipping on Orders Above ₹999</span>
+            <span><i class="fas fa-phone"></i> Support: +91-XXXXX-XXXXX</span>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-inner">
+            <a href="/" class="logo" id="logo">
+                <span class="logo-icon">✦</span>
+                <span class="logo-text">Geeta Kalp</span>
+            </a>
+
+            <div class="nav-links" id="navLinks">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/shop" class="nav-link">Shop</a>
+                <a href="/shop?category=new-arrivals" class="nav-link">New Arrivals</a>
+                <a href="/shop?sort=discount" class="nav-link">Offers</a>
+            </div>
+
+            <div class="nav-actions">
+                <button class="nav-action-btn" id="searchToggle" aria-label="Search">
+                    <i class="fas fa-search"></i>
+                </button>
+
+                <!-- User Dropdown -->
+                <div class="user-menu-wrapper" style="position: relative;">
+                    <button class="nav-action-btn" id="userMenuBtn" aria-label="User Account">
+                        <i class="fas fa-user"></i>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown" style="display: none; position: absolute; top: 100%; right: 0; background: var(--bg-card); min-width: 200px; border-radius: var(--radius-sm); border: 1px solid var(--border); box-shadow: var(--shadow-lg); padding: 8px 0; z-index: 1001; margin-top: 10px;">
+                        <div id="unauthMenu">
+                            <button class="dropdown-item" onclick="openLoginModal()" style="width: 100%; text-align: left; padding: 10px 20px; font-family: var(--font); background: none; border: none; cursor: pointer; color: var(--text);"><i class="fas fa-sign-in-alt" style="margin-right: 8px; color: var(--primary);"></i> Login / Register</button>
+                        </div>
+                        <div id="authMenu" style="display: none;">
+                            <div style="padding: 10px 20px; border-bottom: 1px solid var(--border); margin-bottom: 8px;">
+                                <div style="font-weight: 600; font-size: 0.9rem;" id="userDisplayName">User</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);" id="userDisplayEmail">user@example.com</div>
+                            </div>
+                            <a href="/profile" class="dropdown-item" style="display: block; padding: 10px 20px; color: var(--text); font-size: 0.9rem;"><i class="fas fa-box-open" style="margin-right: 8px; color: var(--text-dim);"></i> My Orders</a>
+                            <a href="/profile#address" class="dropdown-item" style="display: block; padding: 10px 20px; color: var(--text); font-size: 0.9rem;"><i class="fas fa-map-marker-alt" style="margin-right: 8px; color: var(--text-dim);"></i> Manage Addresses</a>
+                            <button class="dropdown-item" onclick="customerLogout()" style="width: 100%; text-align: left; padding: 10px 20px; font-family: var(--font); background: none; border: none; cursor: pointer; color: var(--danger); font-size: 0.9rem;"><i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i> Logout</button>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="/cart" class="nav-action-btn cart-btn" id="cartBtn" aria-label="Cart">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="cart-count" id="cartCount">0</span>
+                </a>
+                <button class="nav-action-btn hamburger" id="hamburger" aria-label="Menu">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search Overlay -->
+        <div class="search-overlay" id="searchOverlay">
+            <div class="container">
+                <form action="/shop" method="GET" class="search-form">
+                    <input type="text" name="search" placeholder="Search products..." class="search-input" id="searchInput" autocomplete="off">
+                    <button type="submit" class="search-submit"><i class="fas fa-search"></i></button>
+                    <button type="button" class="search-close" id="searchClose"><i class="fas fa-times"></i></button>
+                </form>
+            </div>
+        </div>
+    </nav>

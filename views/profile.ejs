@@ -1,0 +1,288 @@
+<%- include('partials/header') %>
+
+<section class="page-hero page-hero-sm">
+    <div class="container">
+        <h1 class="page-title">My Profile</h1>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div id="unauthProfile" style="display: none; text-align: center; padding: 60px 20px;">
+            <i class="fas fa-lock" style="font-size: 3rem; color: var(--text-dim); margin-bottom: 20px;"></i>
+            <h3>Authentication Required</h3>
+            <p style="color: var(--text-muted); margin-bottom: 24px;">Please log in to view your orders and manage your profile.</p>
+            <button class="btn btn-primary" onclick="openLoginModal()">Login Now</button>
+        </div>
+
+        <div id="authProfile" style="display: none;">
+            <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+                
+                <!-- Sidebar -->
+                <div style="width: 280px; flex-shrink: 0;">
+                    <div style="background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 24px;">
+                        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border);">
+                            <div style="width: 50px; height: 50px; border-radius: 50%; background: var(--primary-light); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; font-weight: bold;" id="profileAvatar">U</div>
+                            <div>
+                                <h4 style="margin: 0; font-size: 1.1rem;" id="profileName">User</h4>
+                                <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);" id="profileEmail">user@example.com</p>
+                            </div>
+                        </div>
+                        <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
+                            <li><a href="#orders" class="profile-nav-link active" onclick="showTab('orders', this)"><i class="fas fa-box-open" style="width: 24px;"></i> My Orders</a></li>
+                            <li><a href="#address" class="profile-nav-link" onclick="showTab('address', this)"><i class="fas fa-map-marker-alt" style="width: 24px;"></i> Saved Addresses</a></li>
+                            <li style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+                                <button class="btn btn-outline btn-block" style="border-color: rgba(239, 68, 68, 0.3); color: var(--danger);" onclick="customerLogout()">Logout</button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div style="flex: 1; min-width: 0;">
+                    <!-- Orders Tab -->
+                    <div id="tab-orders" class="profile-tab">
+                        <h2 style="font-size: 1.5rem; margin-bottom: 24px;">My Orders</h2>
+                        <div id="ordersList">
+                            <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 16px;"></i>
+                                <p>Loading your orders...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Address Tab -->
+                    <div id="tab-address" class="profile-tab" style="display: none;">
+                        <h2 style="font-size: 1.5rem; margin-bottom: 24px;">Saved Addresses</h2>
+                        <div style="background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 24px;">
+                            <form id="addressForm" onsubmit="saveProfileAddress(event)">
+                                <div class="form-grid">
+                                    <div class="form-group full-width">
+                                        <label for="profPhone">Phone Number</label>
+                                        <input type="tel" id="profPhone" class="form-input" placeholder="+91 XXXXX XXXXX">
+                                    </div>
+                                    <div class="form-group full-width">
+                                        <label for="profAddress">Street Address</label>
+                                        <input type="text" id="profAddress" class="form-input" placeholder="House No., Street, Locality">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profCity">City</label>
+                                        <input type="text" id="profCity" class="form-input" placeholder="City">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profState">State</label>
+                                        <input type="text" id="profState" class="form-input" placeholder="State">
+                                    </div>
+                                    <div class="form-group full-width">
+                                        <label for="profPincode">Pincode</label>
+                                        <input type="text" id="profPincode" class="form-input" placeholder="XXXXXX">
+                                    </div>
+                                </div>
+                                <div style="margin-top: 24px;">
+                                    <button type="submit" class="btn btn-primary" id="saveAddressBtn">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .profile-nav-link {
+        display: block; padding: 12px 16px; border-radius: var(--radius-sm);
+        color: var(--text-muted); font-weight: 500; transition: var(--transition);
+    }
+    .profile-nav-link:hover { background: var(--bg-elevated); color: var(--text); }
+    .profile-nav-link.active {
+        background: rgba(108, 60, 224, 0.1); color: var(--primary);
+    }
+    .order-card {
+        background: var(--bg-card); border-radius: var(--radius-lg);
+        border: 1px solid var(--border); margin-bottom: 20px;
+        overflow: hidden;
+    }
+    .order-card-header {
+        background: var(--bg-elevated); padding: 16px 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex; justify-content: space-between; align-items: center;
+        flex-wrap: wrap; gap: 16px;
+    }
+    .order-card-body { padding: 24px; }
+    .status-badge {
+        padding: 4px 12px; border-radius: 50px; font-size: 0.75rem;
+        font-weight: 600; text-transform: capitalize; display: inline-block;
+    }
+</style>
+
+<script>
+    let profileUser = null;
+
+    firebase.auth().onAuthStateChanged(user => {
+        profileUser = user;
+        if (user) {
+            document.getElementById('unauthProfile').style.display = 'none';
+            document.getElementById('authProfile').style.display = 'block';
+            
+            // Populate sidebar info
+            document.getElementById('profileName').textContent = user.displayName || 'Customer';
+            document.getElementById('profileEmail').textContent = user.email || '';
+            document.getElementById('profileAvatar').textContent = (user.displayName || 'C').charAt(0).toUpperCase();
+
+            // Load data
+            loadOrders(user.email);
+            loadAddress(user.uid);
+            
+            // Handle hash routing
+            if (window.location.hash === '#address') {
+                document.querySelector('a[href="#address"]').click();
+            }
+        } else {
+            document.getElementById('unauthProfile').style.display = 'block';
+            document.getElementById('authProfile').style.display = 'none';
+        }
+    });
+
+    function showTab(tabId, el) {
+        document.querySelectorAll('.profile-tab').forEach(t => t.style.display = 'none');
+        document.getElementById(`tab-${tabId}`).style.display = 'block';
+        
+        document.querySelectorAll('.profile-nav-link').forEach(l => l.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    async function loadOrders(email) {
+        const list = document.getElementById('ordersList');
+        if (!email) return;
+
+        try {
+            // Fetch all orders and filter by email (since we don't have custom rules setup for direct querying)
+            const snapshot = await firebase.database().ref('orders').once('value');
+            const orders = [];
+            snapshot.forEach(child => {
+                const order = { id: child.key, ...child.val() };
+                if (order.customerInfo && order.customerInfo.email === email) {
+                    orders.push(order);
+                }
+            });
+
+            orders.sort((a, b) => b.createdAt - a.createdAt);
+
+            if (orders.length === 0) {
+                list.innerHTML = `
+                    <div style="text-align: center; padding: 40px; background: var(--bg-elevated); border-radius: var(--radius-lg);">
+                        <i class="fas fa-shopping-bag" style="font-size: 3rem; color: var(--text-dim); margin-bottom: 16px;"></i>
+                        <h4>No orders yet</h4>
+                        <p style="color: var(--text-muted); margin-bottom: 24px;">Looks like you haven't made your first purchase yet.</p>
+                        <a href="/shop" class="btn btn-primary">Start Shopping</a>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            orders.forEach(order => {
+                const date = new Date(order.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+                
+                let statusColor = '#38bdf8'; // processing
+                let statusBg = 'rgba(14,165,233,0.15)';
+                if (order.status === 'paid') { statusColor = 'var(--success)'; statusBg = 'rgba(16,185,129,0.15)'; }
+                if (order.status === 'created') { statusColor = 'var(--accent)'; statusBg = 'rgba(245,158,11,0.15)'; }
+                if (order.status === 'delivered') { statusColor = 'var(--success)'; statusBg = 'rgba(16,185,129,0.2)'; }
+
+                html += `
+                    <div class="order-card">
+                        <div class="order-card-header">
+                            <div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">ORDER PLACED</div>
+                                <div style="font-weight: 500;">${date}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">TOTAL</div>
+                                <div style="font-weight: 500;">₹${(order.amount).toLocaleString('en-IN')}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">ORDER #</div>
+                                <div style="font-family: monospace;">${order.id}</div>
+                            </div>
+                            <div>
+                                <span class="status-badge" style="color: ${statusColor}; background: ${statusBg};">${order.status}</span>
+                            </div>
+                        </div>
+                        <div class="order-card-body">
+                            ${(order.items || []).map(item => `
+                                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+                                    <div style="width: 60px; height: 60px; background: var(--bg-elevated); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--text-dim);">
+                                        <i class="fas fa-image"></i>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <h5 style="margin: 0;">${item.name}</h5>
+                                        <p style="margin: 4px 0 0; font-size: 0.9rem; color: var(--text-muted);">Qty: ${item.quantity} × ₹${item.price.toLocaleString('en-IN')}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            <div style="margin-top: 16px; text-align: right;">
+                                <a href="/order/${order.id}" class="btn btn-primary btn-sm">View Details & Track</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            list.innerHTML = html;
+
+        } catch (error) {
+            console.error(error);
+            list.innerHTML = `<div style="color: var(--danger); padding: 20px;">Failed to load orders. Please try again.</div>`;
+        }
+    }
+
+    async function loadAddress(uid) {
+        try {
+            const snap = await firebase.database().ref(`customers/${uid}/profile`).once('value');
+            const data = snap.val();
+            if (data) {
+                if(data.phone) document.getElementById('profPhone').value = data.phone;
+                if(data.address) document.getElementById('profAddress').value = data.address;
+                if(data.city) document.getElementById('profCity').value = data.city;
+                if(data.state) document.getElementById('profState').value = data.state;
+                if(data.pincode) document.getElementById('profPincode').value = data.pincode;
+            }
+        } catch(e) {
+            console.error("Error loading address", e);
+        }
+    }
+
+    async function saveProfileAddress(e) {
+        e.preventDefault();
+        if (!profileUser) return;
+        
+        const btn = document.getElementById('saveAddressBtn');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        btn.disabled = true;
+
+        const data = {
+            phone: document.getElementById('profPhone').value,
+            address: document.getElementById('profAddress').value,
+            city: document.getElementById('profCity').value,
+            state: document.getElementById('profState').value,
+            pincode: document.getElementById('profPincode').value
+        };
+
+        try {
+            await firebase.database().ref(`customers/${profileUser.uid}/profile`).update(data);
+            showToast('Address saved successfully!');
+        } catch (error) {
+            showToast('Failed to save address', 'error');
+        } finally {
+            btn.innerHTML = 'Save Changes';
+            btn.disabled = false;
+        }
+    }
+
+</script>
+
+<%- include('partials/footer') %>

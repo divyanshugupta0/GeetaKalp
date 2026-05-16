@@ -1,0 +1,20 @@
+<aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-header">
+        <a href="/" class="admin-logo"><span class="logo-icon">✦</span><span class="logo-text">Geeta Kalp</span></a>
+        <span class="admin-badge">Admin</span>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="/admin" class="sidebar-link <%= activePage === 'dashboard' ? 'active' : '' %>"><i class="fas fa-chart-line"></i><span>Dashboard</span></a>
+        <a href="/admin/products" class="sidebar-link <%= activePage === 'products' ? 'active' : '' %>"><i class="fas fa-box"></i><span>Products</span></a>
+        <a href="/admin/orders" class="sidebar-link <%= activePage === 'orders' ? 'active' : '' %>"><i class="fas fa-shopping-cart"></i><span>Orders</span></a>
+        <a href="/admin/order-history" class="sidebar-link <%= activePage === 'order-history' ? 'active' : '' %>"><i class="fas fa-history"></i><span>Order History</span></a>
+        <a href="/admin/users" class="sidebar-link <%= activePage === 'users' ? 'active' : '' %>"><i class="fas fa-users"></i><span>Users</span></a>
+        <a href="/admin/coupons" class="sidebar-link <%= activePage === 'coupons' ? 'active' : '' %>"><i class="fas fa-ticket-alt"></i><span>Coupons</span></a>
+        <a href="/admin/reviews" class="sidebar-link <%= activePage === 'reviews' ? 'active' : '' %>"><i class="fas fa-star"></i><span>Reviews</span></a>
+        <a href="/admin/review-history" class="sidebar-link <%= activePage === 'review-history' ? 'active' : '' %>"><i class="fas fa-history"></i><span>Review History</span></a>
+        <a href="/admin/settings" class="sidebar-link <%= activePage === 'settings' ? 'active' : '' %>"><i class="fas fa-cog"></i><span>Settings</span></a>
+    </nav>
+    <div class="sidebar-footer">
+        <button class="sidebar-link logout-btn" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
+    </div>
+</aside>

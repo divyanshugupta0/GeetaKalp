@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Eb+Garamond:ital,wght@0,400..800;1,400..800&amp;family=Plus+Jakarta+Sans:wght@200..800&amp;family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "inverse-on-surface": "#ecf3e6",
+                      "surface-tint": "#006e1e",
+                      "on-tertiary": "#ffffff",
+                      "on-background": "#171d15",
+                      "tertiary": "#aa265b",
+                      "on-primary-fixed": "#002204",
+                      "surface-dim": "#d5dccf",
+                      "primary": "#006b1d",
+                      "background-dark": "#112115",
+                      "on-tertiary-fixed-variant": "#8d0846",
+                      "divider": "rgba(17, 33, 21, 0.1)",
+                      "inverse-surface": "#2b3229",
+                      "primary-fixed-dim": "#66df6c",
+                      "surface-bright": "#f4fcee",
+                      "on-error-container": "#93000a",
+                      "outline-variant": "#bdcab8",
+                      "inverse-primary": "#66df6c",
+                      "tertiary-fixed-dim": "#ffb1c5",
+                      "error": "#ba1a1a",
+                      "on-secondary-container": "#576959",
+                      "on-secondary": "#ffffff",
+                      "tertiary-container": "#ca4174",
+                      "on-tertiary-container": "#fffbff",
+                      "surface-container-lowest": "#ffffff",
+                      "secondary": "#516353",
+                      "on-primary": "#ffffff",
+                      "primary-fixed": "#83fc86",
+                      "tertiary-fixed": "#ffd9e1",
+                      "glass-surface": "rgba(255, 255, 255, 0.8)",
+                      "on-tertiary-fixed": "#3f001b",
+                      "error-container": "#ffdad6",
+                      "surface-container-highest": "#dde5d8",
+                      "surface-variant": "#dde5d8",
+                      "surface-container": "#e9f0e3",
+                      "background": "#f4fcee",
+                      "glass-border": "rgba(255, 255, 255, 1.0)",
+                      "surface-container-high": "#e3eadd",
+                      "surface": "#f4fcee",
+                      "on-surface": "#171d15",
+                      "on-primary-fixed-variant": "#005315",
+                      "on-secondary-fixed-variant": "#3a4b3d",
+                      "background-light": "#f6f8f6",
+                      "secondary-fixed": "#d4e8d4",
+                      "secondary-fixed-dim": "#b8ccb9",
+                      "on-surface-variant": "#3e4a3c",
+                      "secondary-container": "#d4e8d4",
+                      "outline": "#6e7b6a",
+                      "on-error": "#ffffff",
+                      "surface-container-low": "#eff6e9",
+                      "primary-container": "#008727",
+                      "on-primary-container": "#f7fff1",
+                      "on-secondary-fixed": "#0f1f13",
+                      "forest-pill": "#4A5D4E"
+              },
+              "borderRadius": {
+                      "DEFAULT": "1rem",
+                      "lg": "2rem",
+                      "xl": "3rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "section-margin": "48px",
+                      "container-padding": "24px",
+                      "unit": "4px",
+                      "element-gap": "12px",
+                      "stack-gap": "32px"
+              },
+              "fontFamily": {
+                      "display-lg": ["Eb Garamond"],
+                      "display-md": ["Eb Garamond"],
+                      "label-sm": ["Plus Jakarta Sans"],
+                      "label-caps": ["Plus Jakarta Sans"],
+                      "body-md": ["Plus Jakarta Sans"],
+                      "display-sm": ["Eb Garamond"],
+                      "cormorant": ["Cormorant Garamond", "serif"]
+              },
+              "fontSize": {
+                      "display-lg": ["36px", {"lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                      "display-md": ["30px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                      "label-sm": ["12px", {"lineHeight": "1", "fontWeight": "400"}],
+                      "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "500"}],
+                      "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "display-sm": ["20px", {"lineHeight": "1.2", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            font-size: 20px;
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #f4fcee 0%, #e9f0e3 50%, #d4e8d4 100%);
+            background-size: 400% 400%;
+            animation: gradientMove 15s ease infinite;
+        }
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .fluid-mask {
+            mask-image: radial-gradient(circle, black 40%, transparent 80%);
+            -webkit-mask-image: radial-gradient(circle, black 40%, transparent 80%);
+        }
+        .glass-orb {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1));
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            position: absolute;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-x-hidden">
+<!-- TopNavBar -->
+<header class="bg-glass-surface/80 dark:bg-background-dark/80 backdrop-blur-md font-display-sm text-display-sm tracking-wide docked full-width top-0 sticky border-b border-glass-border/20 shadow-sm z-50">
+<div class="flex justify-between items-center w-full px-container-padding py-4 max-w-7xl mx-auto">
+<div class="font-display-md text-display-md text-primary dark:text-primary-fixed-dim italic">Organic Ethereal</div>
+<nav class="hidden md:flex gap-8 items-center">
+<a class="text-primary dark:text-primary-fixed border-b border-primary/40 pb-1 hover:text-primary dark:hover:text-primary-fixed transition-colors duration-300" href="#">Sanctuary</a>
+<a class="text-on-surface-variant/70 dark:text-on-surface-variant/60 hover:text-primary dark:hover:text-primary-fixed transition-colors duration-300" href="#">Apothecary</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant/70 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">shopping_cart</span>
+</button>
+<button class="text-on-surface-variant/70 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">person</span>
+</button>
+</div>
+</div>
+</header>
+<main>
+<!-- Full-screen Hero -->
+<section class="relative min-h-[921px] w-full flex items-center justify-center hero-gradient overflow-hidden">
+<!-- Decorative Orbs -->
+<div class="glass-orb w-64 h-64 -top-10 -left-10 opacity-60"></div>
+<div class="glass-orb w-96 h-96 bottom-20 -right-20 opacity-40"></div>
+<div class="glass-orb w-32 h-32 top-1/2 left-1/4 opacity-30"></div>
+<div class="relative z-10 max-w-7xl mx-auto px-container-padding w-full grid grid-cols-1 md:grid-cols-2 gap-stack-gap items-center">
+<!-- Text Content -->
+<div class="text-center md:text-left">
+<h1 class="font-cormorant text-[72px] leading-[1.1] text-secondary-fixed-variant mb-element-gap">
+                        Cultivate Your <span class="italic font-light">Inner</span> Stillness
+                    </h1>
+<p class="font-body-md text-on-surface-variant max-w-md mx-auto md:mx-0 mb-stack-gap leading-relaxed opacity-80">
+                        Harness the profound silence of nature with our ethically sourced botanical rituals, designed to ground your spirit and illuminate your essence.
+                    </p>
+<a class="inline-block bg-forest-pill text-white px-10 py-4 rounded-full font-label-caps uppercase tracking-widest hover:opacity-90 transition-all duration-300 shadow-sm" href="#">
+                        Explore Botanicals
+                    </a>
+</div>
+<!-- Floating Botanical Image -->
+<div class="relative flex justify-center items-center h-[500px]">
+<div class="relative w-full max-w-md aspect-square fluid-mask">
+<img alt="Botanical Product" class="w-full h-full object-cover rounded-full" data-alt="A premium glass apothecary bottle containing a clear botanical oil, set against a soft sage green and cream abstract background. The bottle is surrounded by delicate, floating medicinal herbs and dried petals. High-key, ethereal lighting creates soft shadows and a sense of weightlessness, emphasizing a luxury wellness aesthetic consistent with a minimalist design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuChv0izQpTzGlDsZ57nLBqTbPzfFtDZhQGEvXQIiVAa-VXWUqRemlngJ57QXYnXbl2cCLXrB6XT5bH5tXBGAh7prtnHV2S6Vkgga2YzB3Mrr2zc-_aFpZ8p2opmG4OVS4S2y7liFhtMtpIch8kuZqlbpfpV5leG7rpiYi_XRjZAleNt3gDrWHI0vMhA5iSEOLcmNlu6nvwFQzMshA33dAUz8DFceA93skTQbu-M7jgtZH2MCSCrQYcUBwqyu4kvRnANHmi23sdKhEA"/>
+</div>
+</div>
+</div>
+</section>
+<!-- Bento Grid Rituals Section -->
+<section class="max-w-7xl mx-auto px-container-padding py-section-margin">
+<div class="text-center mb-stack-gap">
+<span class="font-label-caps text-primary tracking-[0.2em] uppercase">The Collection</span>
+<h2 class="font-display-md text-display-md mt-2">Rituals of Renewal</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-element-gap">
+<!-- Large Feature Card -->
+<div class="md:col-span-8 bg-surface-container-low rounded-xl p-8 flex flex-col justify-end min-h-[400px] relative overflow-hidden group">
+<img class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" data-alt="A close-up of a botanical skincare ritual being performed in a serene, sun-drenched minimalist bathroom. Steam rises softly in the high-key light, blending with the sage green and white tiles. The scene is calm, focused on the tactile experience of glass and water, evoking a premium, ethereal wellness atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBx02kyKJWYsHQ7jN8Icxc-qqzGW1COzu79y5rsnvr_Gs1MTQbDBieeQkxJgu5ydofa83OW0kUfw9tmjP-MP53krK1NVtuwzSjOeC0usgXS2GB3utUbRB8aGN05ccrEV0eaAAn7VaGh9tA1Wa3Dlpt_AAJETIFMam7JMYPZKnx9KTh5ZMSAMkXlSnfVIIHdO1k179DZpQPdh_cT_vpEJPL94cA_8BvbV7whXgNTT0EBD1c2u0LbecOy4fbY4qy9BvD1LgEsWmnpZ2A"/>
+<div class="relative z-10">
+<h3 class="font-display-sm text-display-sm mb-2">Morning Radiance</h3>
+<p class="text-on-surface-variant max-w-sm mb-4">Awaken your senses with the purity of cold-pressed essence.</p>
+<span class="font-label-sm border-b border-primary/20 pb-1">Learn More</span>
+</div>
+</div>
+<!-- Small Card 1 -->
+<div class="md:col-span-4 bg-glass-surface backdrop-blur-md border border-glass-border rounded-xl p-8 flex flex-col items-center text-center shadow-sm">
+<div class="w-24 h-24 rounded-full overflow-hidden border border-primary/10 mb-6">
+<img class="w-full h-full object-cover" data-alt="Macro photography of organic green tea leaves and dried botanicals in a circular ceramic bowl. The lighting is soft and bright, emphasizing textures and the natural sage green palette. The composition is clean and minimalist, reflecting a professional health and beauty brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQrtM2KL4VsmSQe95qmtEaWmRjGtx_E9_hTgDXZofnE3Lwlb_g-b-A_4NZ4FWrpL4EpMEnGyGqSpi5Fj3W2uC0gDyj1vRTKYov6_jW2AaDHZyR2rui_FG9sZG6zq3ol3Cx7lEeWdcO69tM3F_v_MZIybXz9kskAoABTMrrawoxQt-QkPrd-oczKyk7KD3u4AxXOCDQX0IH393XYfAthEvBkDOCCr7Ipv32EInuYRCwho9t2HmrUFsgIgYdCpN_DQI71INY_mZUIaE"/>
+</div>
+<h3 class="font-display-sm text-display-sm mb-2">Botanical Base</h3>
+<p class="text-on-surface-variant text-sm mb-4">100% Organic, ethically wild-harvested ingredients.</p>
+<span class="material-symbols-outlined text-primary">eco</span>
+</div>
+<!-- Small Card 2 -->
+<div class="md:col-span-4 bg-secondary-container/30 rounded-xl p-8 flex flex-col justify-center items-center text-center">
+<h3 class="font-display-sm text-display-sm mb-2">Artisan Glass</h3>
+<p class="text-on-surface-variant text-sm">Refillable, hand-blown vessels for lasting beauty.</p>
+</div>
+<!-- Medium Feature Card -->
+<div class="md:col-span-8 bg-surface-container-highest rounded-xl p-8 flex items-center gap-8 overflow-hidden">
+<div class="flex-1">
+<h3 class="font-display-sm text-display-sm mb-2">Evening Solace</h3>
+<p class="text-on-surface-variant mb-6">Transition to rest with our deep-calm botanical blends.</p>
+<a class="bg-primary text-white px-6 py-2 rounded-full font-label-caps tracking-widest text-xs uppercase" href="#">Shop Sleep</a>
+</div>
+<div class="hidden sm:block w-1/3 aspect-square rounded-full overflow-hidden border-4 border-white/40">
+<img class="w-full h-full object-cover" data-alt="A peaceful evening setting with a single candle glowing in a glass holder, placed on a light wooden surface next to a sprig of dried lavender. The background is a soft, dark forest green that feels intimate and safe. High-end lighting captures the warmth of the flame against a minimalist, ethereal room." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqp3gia_LKbvUIDBrg-_Fa6q7aqM8hXf4jsmy6L-_YRfixoa9ZBSGKTpoX1EW52gCvud7XIfuoL9QWLGNk7szEGVWSzZkd0pQOorubGKivD_fbEs13XE2RYuMk8M_4c00vrO6S3iYkYcSaGbzy4U6APBo8j0x6dgXWJHRuuIwrsJ6J2TSbvzG2OYJ7IdDdbHnxV2cWQRXvHhGJaOACt55TnEi-mIOIYQZyzahoLyzMCUdR6KoDln6-EJYmqtZacK87qjA2JXhNwM4"/>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest dark:bg-background-dark full-width py-stack-gap border-t border-divider transition-all duration-500 ease-in-out">
+<div class="flex flex-col md:flex-row justify-between items-center px-container-padding gap-element-gap max-w-7xl mx-auto">
+<div class="font-display-sm text-display-sm text-on-surface">Organic Ethereal</div>
+<nav class="flex gap-6">
+<a class="text-on-surface-variant/50 font-label-sm text-label-sm uppercase tracking-[0.2em] font-light hover:text-primary dark:hover:text-primary-fixed transition-opacity" href="#">Sustainability</a>
+<a class="text-on-surface-variant/50 font-label-sm text-label-sm uppercase tracking-[0.2em] font-light hover:text-primary dark:hover:text-primary-fixed transition-opacity" href="#">Shipping</a>
+<a class="text-on-surface-variant/50 font-label-sm text-label-sm uppercase tracking-[0.2em] font-light hover:text-primary dark:hover:text-primary-fixed transition-opacity" href="#">Returns</a>
+<a class="text-on-surface-variant/50 font-label-sm text-label-sm uppercase tracking-[0.2em] font-light hover:text-primary dark:hover:text-primary-fixed transition-opacity" href="#">Privacy</a>
+</nav>
+<div class="text-on-surface-variant/50 font-label-sm text-label-sm uppercase tracking-[0.2em] font-light">
+                © 2024 Organic Ethereal. Crafted for Ritual.
+            </div>
+</div>
+</footer>
+</body></html>

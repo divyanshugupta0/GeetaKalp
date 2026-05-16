@@ -1,0 +1,15 @@
+# Organic Ethereal Shop - Phase 2 Screens
+
+## Screens to Generate
+
+- **Sanctuary (Landing Page):** Immersive hero with slow-moving gradient, floating featured items, and "Explore Botanicals" CTA.
+- **Checkout Ritual:** A distraction-free, floating checkout modal or minimal page. Focused on the "Complete Ritual" flow.
+- **Aura Admin (Dashboard):** A serene backend for managing orders and botanicals. Glassmorphic cards for analytics and clean table layouts.
+- **Identity (Login/Signup):** A centered, glassmorphic modal over a soft gradient background for a calming entry into the shop.
+- **New Arrivals / Offers:** Integrated into the Apothecary collection or as a specialized landing section.
+
+## Design Continuity
+- **Background:** CSS animated gradients (Sage to Clay).
+- **Surfaces:** Frosted glass with 16px blur.
+- **Imagery:** Fluid masks (organic, non-rigid shapes).
+- **Typography:** Thin weights, high letter-spacing for sans, elegant serifs for titles.

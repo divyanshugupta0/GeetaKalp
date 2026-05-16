@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = <%- JSON.stringify(firebaseConfig) %>;
+        if (firebaseConfig.apiKey && firebaseConfig.apiKey !== 'your_api_key_here') {
+            firebase.initializeApp(firebaseConfig);
+        }
+    </script>
+</head>
+<body class="admin-body">
+    <!-- Admin Sidebar -->
+    <%- include('../partials/admin-sidebar', { activePage: 'products' }) %>
+
+    <main class="admin-main">
+        <header class="admin-header">
+            <button class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+            <h2 class="admin-page-title">Products</h2>
+            <button class="btn btn-primary btn-sm" onclick="openProductModal()"><i class="fas fa-plus"></i> Add Product</button>
+        </header>
+
+        <div class="admin-content">
+            <div class="admin-section">
+                <div class="section-header-bar">
+                    <h3><i class="fas fa-box"></i> All Products</h3>
+                    <div class="header-actions">
+                        <button class="btn btn-sm btn-outline" onclick="openCategoryModal()"><i class="fas fa-tags"></i> Categories</button>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Image</th><th>Name</th><th>Category</th>
+                                <th>MRP</th><th>Sale Price</th><th>Stock</th>
+                                <th>NEW</th><th>Active</th><th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsBody"><tr><td colspan="9" class="table-empty">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Product Modal -->
+    <div class="modal-overlay" id="productModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add Product</h3>
+                <button class="modal-close" onclick="closeProductModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="productForm" onsubmit="saveProduct(event)">
+                <input type="hidden" id="editProductId">
+                <div class="modal-body">
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>Product Name *</label>
+                            <input type="text" id="prodName" required class="form-input" placeholder="Product name">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Description</label>
+                            <textarea id="prodDesc" class="form-input" rows="3" placeholder="Product description"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Original Price (MRP) *</label>
+                            <input type="number" id="prodOrigPrice" required class="form-input" placeholder="₹ MRP" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Sale Price *</label>
+                            <input type="number" id="prodSalePrice" required class="form-input" placeholder="₹ Sale Price" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <div style="display: flex; gap: 8px;">
+                                <select id="prodCategory" class="form-input" style="flex: 1;"><option value="General">General</option></select>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="openCategoryModal()" title="Manage Categories"><i class="fas fa-plus"></i></button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Stock</label>
+                            <input type="number" id="prodStock" class="form-input" placeholder="Stock quantity" value="0">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Product Images</label>
+                            <div style="border: 2px dashed var(--border); padding: 20px; border-radius: var(--radius-md); text-align: center; background: var(--bg-body); transition: all 0.2s;" id="uploadDropZone">
+                                <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: var(--text-muted); margin-bottom: 12px;"></i>
+                                <p style="margin: 0 0 12px 0; font-size: 0.95rem;">Drag & drop images here or</p>
+                                <input type="file" id="imageUploadInput" accept="image/*" style="display: none;" onchange="uploadImage(event)">
+                                <button type="button" class="btn btn-outline" onclick="document.getElementById('imageUploadInput').click()">Browse Files</button>
+                                <div id="uploadStatus" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 12px; height: 16px;"></div>
+                            </div>
+                            <!-- Hidden input to maintain compatibility or we just read from gallery -->
+                            <div id="imageGallery" style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px;">
+                                <!-- Thumbnails will appear here -->
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="prodIsNew"> Show NEW Badge
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="prodActive" checked> Active (visible)
+                            </label>
+                        </div>
+                        <div class="form-group full-width" style="margin-top: 8px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Accepted Payment Methods *</label>
+                            <div style="display: flex; gap: 16px;">
+                                <label class="toggle-label" style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="payMethodRazorpay" checked> Razorpay (Online)
+                                </label>
+                                <label class="toggle-label" style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="payMethodCOD" checked> Cash on Delivery (COD)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Price Preview -->
+                    <div class="price-preview" id="pricePreview">
+                        <h4>Price Preview</h4>
+                        <div class="preview-pricing">
+                            <span class="current-price" id="previewSale">₹0</span>
+                            <span class="original-price" id="previewOriginal">₹0</span>
+                            <span class="discount-tag" id="previewDiscount">0% OFF</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveProductBtn">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Category Modal -->
+    <div class="modal-overlay" id="categoryModal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3>Manage Categories</h3>
+                <button class="modal-close" onclick="closeCategoryModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="category-add">
+                    <input type="text" id="newCategoryName" class="form-input" placeholder="New category name">
+                    <button class="btn btn-primary btn-sm" onclick="addCategory()"><i class="fas fa-plus"></i></button>
+                </div>
+                <div class="category-list" id="categoryList">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/admin.js"></script>
+    <script>
+        let currentToken = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            currentToken = localStorage.getItem('adminToken');
+            if (!currentToken) {
+                window.location.href = '/admin/login';
+                return;
+            }
+            loadProducts();
+            loadCategories();
+        });
+
+        // Price preview
+        document.getElementById('prodOrigPrice').addEventListener('input', updatePreview);
+        document.getElementById('prodSalePrice').addEventListener('input', updatePreview);
+
+        function updatePreview() {
+            const orig = parseFloat(document.getElementById('prodOrigPrice').value) || 0;
+            const sale = parseFloat(document.getElementById('prodSalePrice').value) || 0;
+            document.getElementById('previewSale').textContent = `₹${sale.toLocaleString('en-IN')}`;
+            document.getElementById('previewOriginal').textContent = `₹${orig.toLocaleString('en-IN')}`;
+            const disc = orig > 0 ? Math.round(((orig - sale) / orig) * 100) : 0;
+            document.getElementById('previewDiscount').textContent = `${disc}% OFF`;
+        }
+
+        async function loadProducts() {
+            try {
+                const res = await fetch('/api/products');
+                const data = await res.json();
+                const tbody = document.getElementById('productsBody');
+                if (!data.success || data.products.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="table-empty">No products. Add your first product!</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.products.map(p => `
+                    <tr>
+                        <td><div class="table-img">${p.images && p.images[0] ? `<img src="${p.images[0]}" alt="">` : '<i class="fas fa-image"></i>'}</div></td>
+                        <td><strong>${p.name}</strong></td>
+                        <td>${p.category || 'General'}</td>
+                        <td class="text-muted"><s>₹${(p.originalPrice||0).toLocaleString('en-IN')}</s></td>
+                        <td class="text-success"><strong>₹${(p.salePrice||0).toLocaleString('en-IN')}</strong></td>
+                        <td>${p.stock || 0}</td>
+                        <td>
+                            <button class="toggle-btn ${p.isNew ? 'on' : ''}" onclick="toggleNew('${p.id}', this)" title="Toggle NEW badge">
+                                ${p.isNew ? 'ON' : 'OFF'}
+                            </button>
+                        </td>
+                        <td><span class="status-badge status-${p.active !== false ? 'paid' : 'failed'}">${p.active !== false ? 'Yes' : 'No'}</span></td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-icon" onclick="editProduct('${p.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+                                <button class="btn-icon btn-danger" onclick="deleteProduct('${p.id}', '${p.name}')" title="Delete"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) { console.error('Load products error:', error); }
+        }
+
+        function openProductModal(id) {
+            document.getElementById('productModal').classList.add('active');
+            if (!id) {
+                document.getElementById('modalTitle').textContent = 'Add Product';
+                document.getElementById('productForm').reset();
+                document.getElementById('editProductId').value = '';
+                document.getElementById('prodActive').checked = true;
+                document.getElementById('payMethodRazorpay').checked = true;
+                document.getElementById('payMethodCOD').checked = true;
+            }
+        }
+
+        function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
+        function openCategoryModal() { document.getElementById('categoryModal').classList.add('active'); loadCategories(); }
+        function closeCategoryModal() { document.getElementById('categoryModal').classList.remove('active'); }
+
+        async function editProduct(id) {
+            try {
+                const res = await fetch(`/api/products/${id}`);
+                const data = await res.json();
+                if (!data.success) return;
+                const p = data.product;
+                document.getElementById('editProductId').value = id;
+                document.getElementById('modalTitle').textContent = 'Edit Product';
+                document.getElementById('prodName').value = p.name;
+                document.getElementById('prodDesc').value = p.description || '';
+                document.getElementById('prodOrigPrice').value = p.originalPrice;
+                document.getElementById('prodSalePrice').value = p.salePrice;
+                document.getElementById('prodStock').value = p.stock || 0;
+                document.getElementById('prodImages').value = (p.images || []).join('\n');
+                document.getElementById('prodIsNew').checked = p.isNew || false;
+                document.getElementById('prodActive').checked = p.active !== false;
+
+                // Set payment methods
+                if (p.paymentMethods) {
+                    document.getElementById('payMethodRazorpay').checked = p.paymentMethods.razorpay !== false;
+                    document.getElementById('payMethodCOD').checked = !!p.paymentMethods.cod;
+                } else {
+                    document.getElementById('payMethodRazorpay').checked = true;
+                    document.getElementById('payMethodCOD').checked = true;
+                }
+
+                // Set category
+                const catSelect = document.getElementById('prodCategory');
+                for (let opt of catSelect.options) {
+                    if (opt.value === p.category) { opt.selected = true; break; }
+                }
+                updatePreview();
+                openProductModal(id);
+            } catch (error) { console.error('Edit error:', error); }
+        }
+
+        async function uploadImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const status = document.getElementById('uploadStatus');
+            status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${currentToken}` },
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    status.innerHTML = '<i class="fas fa-check text-success"></i> Uploaded';
+                    const textarea = document.getElementById('prodImages');
+                    textarea.value = textarea.value ? textarea.value + '\n' + data.url : data.url;
+                } else {
+                    status.innerHTML = `<i class="fas fa-times text-danger"></i> Failed: ${data.error}`;
+                }
+            } catch (error) {
+                console.error(error);
+                status.innerHTML = '<i class="fas fa-times text-danger"></i> Error uploading';
+            } finally {
+                event.target.value = ''; // reset file input
+            }
+        }
+
+        async function saveProduct(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveProductBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            const id = document.getElementById('editProductId').value;
+            const imagesText = document.getElementById('prodImages').value;
+            const images = imagesText.split('\n').map(u => u.trim()).filter(u => u);
+            const body = {
+                name: document.getElementById('prodName').value,
+                description: document.getElementById('prodDesc').value,
+                originalPrice: document.getElementById('prodOrigPrice').value,
+                salePrice: document.getElementById('prodSalePrice').value,
+                category: document.getElementById('prodCategory').value,
+                stock: document.getElementById('prodStock').value,
+                images,
+                isNew: document.getElementById('prodIsNew').checked,
+                active: document.getElementById('prodActive').checked,
+                paymentMethods: {
+                    razorpay: document.getElementById('payMethodRazorpay').checked,
+                    cod: document.getElementById('payMethodCOD').checked
+                }
+            };
+            try {
+                const url = id ? `/api/products/${id}` : '/api/products';
+                const method = id ? 'PUT' : 'POST';
+                const res = await fetch(url, {
+                    method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.success) { closeProductModal(); loadProducts(); }
+                else { alert(data.error); }
+            } catch (error) { alert('Error saving product'); }
+            btn.disabled = false;
+            btn.textContent = 'Save Product';
+        }
+
+        async function toggleNew(id, btn) {
+            try {
+                const res = await fetch(`/api/products/${id}/toggle-new`, {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    btn.classList.toggle('on');
+                    btn.textContent = data.isNew ? 'ON' : 'OFF';
+                }
+            } catch (error) { console.error('Toggle error:', error); }
+        }
+
+        async function deleteProduct(id, name) {
+            if (!confirm(`Delete "${name}"?`)) return;
+            try {
+                await fetch(`/api/products/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                loadProducts();
+            } catch (error) { console.error('Delete error:', error); }
+        }
+
+        async function loadCategories() {
+            try {
+                const res = await fetch('/api/categories');
+                const data = await res.json();
+                const select = document.getElementById('prodCategory');
+                const list = document.getElementById('categoryList');
+                select.innerHTML = '<option value="General">General</option>';
+                if (data.success && data.categories.length > 0) {
+                    data.categories.forEach(c => {
+                        select.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+                    });
+                    list.innerHTML = data.categories.map(c => `
+                        <div class="category-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-elevated); margin-bottom: 8px; border-radius: var(--radius-sm);">
+                            <span style="font-weight: 500;">${c.name}</span>
+                            <button class="btn-icon btn-danger" onclick="deleteCategory('${c.id}', '${c.name}')"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `).join('');
+                } else { list.innerHTML = '<p class="text-muted">No categories added yet.</p>'; }
+            } catch (error) { console.error('Load categories error:', error); }
+        }
+
+        async function deleteCategory(id, name) {
+            if (!confirm(`Delete category "${name}"?`)) return;
+            try {
+                await fetch(`/api/categories/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                loadCategories();
+            } catch (error) { console.error('Delete category error:', error); }
+        }
+
+        async function addCategory() {
+            const name = document.getElementById('newCategoryName').value.trim();
+            if (!name) return;
+            try {
+                await fetch('/api/categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+                    body: JSON.stringify({ name })
+                });
+                document.getElementById('newCategoryName').value = '';
+                loadCategories();
+            } catch (error) { console.error('Add category error:', error); }
+        }
+
+        function adminLogout() { 
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminEmail');
+            window.location.href = '/admin/login'; 
+        }
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            document.getElementById('adminSidebar').classList.toggle('collapsed');
+        });
+    </script>
+</body>
+</html>
