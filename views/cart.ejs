@@ -1,5 +1,11 @@
 <%- include('partials/header') %>
 
+<style>
+    .footer {
+        display: none;
+    }
+</style>
+
 <section class="page-hero page-hero-sm">
     <div class="container">
         <h1 class="page-title">Shopping Cart</h1>
@@ -59,7 +65,7 @@
                     <span>Total</span>
                     <span id="cartTotal">₹0</span>
                 </div>
-                <a href="/checkout" class="btn btn-primary btn-block" id="checkoutBtn">
+                <a href="#" onclick="proceedToCheckout(event)" class="btn btn-primary btn-block" id="checkoutBtn">
                     Proceed to Checkout <i class="fas fa-arrow-right"></i>
                 </a>
                 <a href="/shop" class="btn btn-outline btn-block">
@@ -198,13 +204,13 @@
                     listEl.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No public coupons available at the moment.</div>';
                 } else {
                     listEl.innerHTML = data.coupons.map(c => `
-                        <div style="border: 1px dashed var(--primary-light); padding: 16px; border-radius: var(--radius-sm); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; background: rgba(108,60,224,0.05);">
-                            <div>
-                                <div style="font-weight: 700; font-family: monospace; font-size: 1.1rem; color: var(--primary);">${c.code}</div>
-                                <div style="font-size: 0.85rem; color: var(--text-muted);">${c.discountPercent}% OFF your entire order</div>
-                                ${c.minOrderAmount ? `<div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Min order ₹${Number(c.minOrderAmount).toLocaleString('en-IN')}</div>` : ''}
+                        <div class="coupon-list-item">
+                            <div class="coupon-list-copy">
+                                <div class="coupon-list-code">${c.code}</div>
+                                <div class="coupon-list-desc">${c.discountPercent}% OFF your entire order</div>
+                                ${c.minOrderAmount ? `<div class="coupon-list-min">Min order ₹${Number(c.minOrderAmount).toLocaleString('en-IN')}</div>` : ''}
                             </div>
-                            <button class="btn btn-primary btn-sm" onclick="applyCouponCode('${c.code}')">Apply</button>
+                            <button class="btn btn-primary btn-sm coupon-apply-btn" onclick="applyCouponCode('${c.code}')">Apply</button>
                         </div>
                     `).join('');
                 }
@@ -339,17 +345,17 @@
             <button class="modal-close" onclick="closeCartCouponModal()"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
-            <div style="margin-bottom: 24px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Have a private code?</label>
-                <div style="display: flex; gap: 8px;">
+            <div class="coupon-manual-block">
+                <label>Have a private code?</label>
+                <div class="coupon-manual-row">
                     <input type="text" id="modalCouponInput" class="form-input" placeholder="Enter code" style="text-transform: uppercase;">
-                    <button class="btn btn-outline" onclick="applyManualCoupon()">Apply</button>
+                    <button class="btn btn-outline coupon-manual-btn" onclick="applyManualCoupon()">Apply</button>
                 </div>
                 <div id="modalCouponMessage" style="font-size: 0.85rem; margin-top: 8px; font-weight: 500;"></div>
             </div>
 
-            <div>
-                <label style="display: block; margin-bottom: 12px; font-weight: 500; padding-top: 16px; border-top: 1px solid var(--border);">Available Coupons</label>
+            <div class="coupon-public-block">
+                <label>Available Coupons</label>
                 <div id="publicCouponsList">
                     <!-- Populated by JS -->
                 </div>

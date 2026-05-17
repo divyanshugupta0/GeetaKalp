@@ -1,4 +1,4 @@
-const IMAGE_CACHE_NAME = 'geeta-kalp-image-cache-v1';
+const IMAGE_CACHE_NAME = 'geeta-kalp-image-cache-v2';
 const IMAGE_EXTENSIONS = /\.(avif|gif|jpe?g|png|svg|webp)(\?.*)?$/i;
 
 function isImageRequest(request) {
@@ -23,6 +23,24 @@ async function cacheImageRequest(request) {
         cache.put(request, networkResponse.clone());
     }
     return networkResponse;
+}
+
+function buildWarmupRequest(url) {
+    const parsedUrl = new URL(url, self.location.href);
+
+    if (parsedUrl.origin === self.location.origin) {
+        return new Request(parsedUrl.href, {
+            method: 'GET',
+            credentials: 'same-origin',
+            cache: 'force-cache'
+        });
+    }
+
+    return new Request(parsedUrl.href, {
+        method: 'GET',
+        mode: 'no-cors',
+        cache: 'force-cache'
+    });
 }
 
 self.addEventListener('install', (event) => {
@@ -54,12 +72,12 @@ self.addEventListener('message', (event) => {
             const cache = await caches.open(IMAGE_CACHE_NAME);
             await Promise.all(data.urls.map(async (url) => {
                 try {
-                    const request = new Request(url, { mode: 'no-cors' });
+                    const request = buildWarmupRequest(url);
                     const cachedResponse = await cache.match(request);
                     if (!cachedResponse) {
                         const response = await fetch(request);
                         if (response && (response.ok || response.type === 'opaque')) {
-                            await cache.put(request, response);
+                            await cache.put(request, response.clone());
                         }
                     }
                 } catch (error) {

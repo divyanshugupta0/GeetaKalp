@@ -1,34 +1,65 @@
 // auth.js
-const auth = firebase.auth();
-const googleProvider = new firebase.auth.GoogleAuthProvider();
+if (!window.firebase || !firebase.apps || firebase.apps.length === 0) {
+    console.warn('Firebase is not initialized. Customer authentication is disabled.');
+}
+
+const auth = window.firebase && firebase.apps && firebase.apps.length > 0 ? firebase.auth() : null;
+const googleProvider = auth ? new firebase.auth.GoogleAuthProvider() : null;
 
 let currentUser = null;
 
-auth.onAuthStateChanged((user) => {
-    currentUser = user;
-    updateUserUI();
-});
+if (auth) {
+    auth.getRedirectResult()
+        .then((result) => {
+            if (result && result.user) {
+                closeLoginModal();
+                showToast('Successfully logged in!', 'success');
+                if (window.location.pathname.includes('/checkout')) {
+                    window.location.reload();
+                }
+            }
+        })
+        .catch((error) => {
+            console.error('Google redirect auth error:', error);
+            showToast(error.message, 'error');
+        });
+
+    auth.onAuthStateChanged((user) => {
+        currentUser = user;
+        updateUserUI();
+    });
+}
 
 function updateUserUI() {
     const unauthMenu = document.getElementById('unauthMenu');
     const authMenu = document.getElementById('authMenu');
     const nameEl = document.getElementById('userDisplayName');
     const emailEl = document.getElementById('userDisplayEmail');
+    const mobileUserBtn = document.getElementById('userMenuBtnMobile');
 
     if (currentUser) {
         if (unauthMenu) unauthMenu.style.display = 'none';
         if (authMenu) authMenu.style.display = 'block';
         if (nameEl) nameEl.textContent = currentUser.displayName || 'Customer';
         if (emailEl) emailEl.textContent = currentUser.email || '';
+        if (mobileUserBtn) {
+            mobileUserBtn.classList.add('authenticated');
+            mobileUserBtn.setAttribute('aria-label', 'My account');
+        }
     } else {
         if (unauthMenu) unauthMenu.style.display = 'block';
         if (authMenu) authMenu.style.display = 'none';
+        if (mobileUserBtn) {
+            mobileUserBtn.classList.remove('authenticated');
+            mobileUserBtn.setAttribute('aria-label', 'Login or register');
+        }
     }
 }
 
 // User Menu Dropdown Toggle
 document.addEventListener('DOMContentLoaded', () => {
     const userMenuBtn = document.getElementById('userMenuBtn');
+    const userMenuBtnMobile = document.getElementById('userMenuBtnMobile');
     const userDropdown = document.getElementById('userDropdown');
 
     if (userMenuBtn && userDropdown) {
@@ -45,6 +76,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    if (userMenuBtnMobile) {
+        userMenuBtnMobile.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (currentUser) {
+                window.location.href = '/profile';
+                return;
+            }
+
+            openLoginModal();
+        });
+    }
 });
 
 function openLoginModal() {
@@ -52,12 +97,15 @@ function openLoginModal() {
     if (modal) modal.classList.add('active');
     const dropdown = document.getElementById('userDropdown');
     if (dropdown) dropdown.style.display = 'none';
+    if (typeof closeNav === 'function') closeNav();
+    document.body.classList.add('modal-open');
     switchAuthTab('login');
 }
 
 function closeLoginModal() {
     const modal = document.getElementById('customerLoginModal');
     if (modal) modal.classList.remove('active');
+    document.body.classList.remove('modal-open');
 }
 
 function switchAuthTab(tab) {
@@ -95,6 +143,7 @@ function switchAuthTab(tab) {
 
 function loginWithEmail(e) {
     e.preventDefault();
+    if (!auth) return showToast('Authentication is not configured', 'error');
     const email = document.getElementById('loginEmail').value;
     const pass = document.getElementById('loginPassword').value;
     
@@ -111,6 +160,7 @@ function loginWithEmail(e) {
 
 function registerWithEmail(e) {
     e.preventDefault();
+    if (!auth) return showToast('Authentication is not configured', 'error');
     const name = document.getElementById('signupName').value;
     const email = document.getElementById('signupEmail').value;
     const pass = document.getElementById('signupPassword').value;
@@ -136,6 +186,14 @@ function registerWithEmail(e) {
 }
 
 function loginWithGoogle() {
+    if (!auth) return showToast('Authentication is not configured', 'error');
+
+    const isMobile = window.matchMedia('(max-width: 768px)').matches || 'ontouchstart' in window;
+    if (isMobile) {
+        auth.signInWithRedirect(googleProvider);
+        return;
+    }
+
     auth.signInWithPopup(googleProvider).then((result) => {
         closeLoginModal();
         showToast('Successfully logged in!', 'success');
@@ -150,6 +208,7 @@ function loginWithGoogle() {
 }
 
 function customerLogout() {
+    if (!auth) return;
     auth.signOut().then(() => {
         showToast('Logged out successfully', 'success');
         if (window.location.pathname.includes('/checkout')) {

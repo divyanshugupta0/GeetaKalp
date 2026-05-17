@@ -354,6 +354,63 @@ const verifyAdmin = async (req, res, next) => {
 };
 
 // ══════════════════════════════════════════
+//  CHECKOUT TOKEN HELPERS
+// ══════════════════════════════════════════
+
+// Generate a one-time checkout token (valid for 5 minutes)
+async function generateCheckoutToken() {
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = Date.now() + (5 * 60 * 1000); // 5 minutes from now
+    
+    await db.ref(`checkoutTokens/${token}`).set({
+        createdAt: admin.database.ServerValue.TIMESTAMP,
+        expiresAt: expiresAt,
+        used: false
+    });
+    
+    return token;
+}
+
+// Validate a checkout token
+async function validateCheckoutToken(token) {
+    if (!token) return { valid: false, error: 'Token required' };
+    
+    try {
+        const snapshot = await db.ref(`checkoutTokens/${token}`).once('value');
+        const tokenData = snapshot.val();
+        
+        if (!tokenData) {
+            return { valid: false, error: 'Invalid token' };
+        }
+        
+        if (tokenData.used) {
+            return { valid: false, error: 'Token already used' };
+        }
+        
+        if (Date.now() > tokenData.expiresAt) {
+            return { valid: false, error: 'Token expired' };
+        }
+        
+        return { valid: true };
+    } catch (error) {
+        console.error('Token validation error:', error);
+        return { valid: false, error: 'Token validation failed' };
+    }
+}
+
+// Consume a checkout token (mark as used)
+async function consumeCheckoutToken(token) {
+    try {
+        await db.ref(`checkoutTokens/${token}`).update({
+            used: true,
+            usedAt: admin.database.ServerValue.TIMESTAMP
+        });
+    } catch (error) {
+        console.error('Token consumption error:', error);
+    }
+}
+
+// ══════════════════════════════════════════
 //  PRODUCT APIS
 // ══════════════════════════════════════════
 
@@ -517,6 +574,46 @@ router.post('/categories', verifyAdmin, async (req, res) => {
 //  ORDER & PAYMENT APIS
 // ══════════════════════════════════════════
 
+// ─── Generate Checkout Token ───
+router.post('/generate-checkout-token', async (req, res) => {
+    try {
+        const token = await generateCheckoutToken();
+        res.json({ 
+            success: true, 
+            token: token,
+            expiresIn: '5 minutes',
+            message: 'Checkout token generated successfully'
+        });
+    } catch (error) {
+        console.error('Generate token error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ─── Validate Checkout Token ───
+router.post('/validate-checkout-token', async (req, res) => {
+    try {
+        const { token } = req.body;
+        const validation = await validateCheckoutToken(token);
+        
+        if (!validation.valid) {
+            return res.status(400).json({ 
+                success: false, 
+                error: validation.error 
+            });
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'Token is valid',
+            valid: true
+        });
+    } catch (error) {
+        console.error('Token validation error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // ─── Create Razorpay Order ───
 router.post('/create-order', async (req, res) => {
     try {
@@ -524,7 +621,17 @@ router.post('/create-order', async (req, res) => {
             return res.status(503).json({ success: false, error: 'Payment gateway not configured' });
         }
 
-        let { amount, amountToPayNow, paymentMethod, currency, customerInfo, items, coupon } = req.body;
+        let { amount, amountToPayNow, paymentMethod, currency, customerInfo, items, coupon, checkoutToken } = req.body;
+
+        // Validate checkout token
+        if (!checkoutToken) {
+            return res.status(401).json({ success: false, error: 'Invalid checkout session. Please start checkout again.' });
+        }
+
+        const tokenValidation = await validateCheckoutToken(checkoutToken);
+        if (!tokenValidation.valid) {
+            return res.status(401).json({ success: false, error: tokenValidation.error });
+        }
 
         if (!amount || !customerInfo || !items) {
             return res.status(400).json({ success: false, error: 'Missing required fields' });
@@ -557,6 +664,9 @@ router.post('/create-order', async (req, res) => {
                 createdAt: admin.database.ServerValue.TIMESTAMP
             };
             const orderRef = await db.ref('orders').push(orderData);
+            
+            // Consume the checkout token
+            await consumeCheckoutToken(checkoutToken);
             
             // Burn the coupon immediately since there is no verify-payment step
             if (coupon && coupon.code && customerInfo.email) {
@@ -607,7 +717,8 @@ router.post('/create-order', async (req, res) => {
             items,
             coupon: coupon || null,
             status: 'created',
-            createdAt: admin.database.ServerValue.TIMESTAMP
+            createdAt: admin.database.ServerValue.TIMESTAMP,
+            checkoutToken: checkoutToken // Store token for reference
         };
 
         const orderRef = await db.ref('orders').push(orderData);
@@ -650,6 +761,11 @@ router.post('/verify-payment', async (req, res) => {
                 razorpaySignature: razorpay_signature,
                 paidAt: admin.database.ServerValue.TIMESTAMP
             });
+
+            // Consume the checkout token on successful payment
+            if (orderData && orderData.checkoutToken) {
+                await consumeCheckoutToken(orderData.checkoutToken);
+            }
 
             // Burn the coupon on successful payment
             if (orderData && orderData.coupon && orderData.coupon.code && orderData.customerInfo && orderData.customerInfo.email) {
@@ -774,6 +890,34 @@ router.get('/stats', verifyAdmin, async (req, res) => {
 // ══════════════════════════════════════════
 
 // ─── Get All Users (Derived from Orders) ───
+router.get('/new-arrivals', verifyAdmin, async (req, res) => {
+    try {
+        const snapshot = await db.ref('settings/newArrivalProductIds').once('value');
+        const productIds = snapshot.val() || [];
+        res.json({ success: true, productIds: Array.isArray(productIds) ? productIds : [] });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post('/new-arrivals', verifyAdmin, async (req, res) => {
+    try {
+        const productIds = Array.isArray(req.body.productIds)
+            ? req.body.productIds.map(id => String(id).trim()).filter(Boolean)
+            : [];
+        const uniqueProductIds = [...new Set(productIds)].slice(0, 12);
+
+        await db.ref('settings').update({
+            newArrivalProductIds: uniqueProductIds,
+            newArrivalUpdatedAt: admin.database.ServerValue.TIMESTAMP
+        });
+
+        res.json({ success: true, productIds: uniqueProductIds });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 router.get('/users', verifyAdmin, async (req, res) => {
     try {
         const snapshot = await db.ref('orders').once('value');

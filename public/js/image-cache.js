@@ -3,6 +3,7 @@
     if (window.__geetaKalpImageCacheRegistered) return;
 
     window.__geetaKalpImageCacheRegistered = true;
+    const LOCAL_STORAGE_KEY = 'geetakalp_cached_image_urls';
 
     function absoluteUrl(url) {
         try {
@@ -35,11 +36,36 @@
         return Array.from(urls);
     }
 
+    function rememberImageUrls(urls) {
+        if (!('localStorage' in window) || !Array.isArray(urls) || urls.length === 0) return;
+
+        try {
+            const previous = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '[]');
+            const merged = Array.from(new Set([...previous, ...urls])).slice(-500);
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
+            localStorage.setItem('geetakalp_cached_image_count', String(merged.length));
+            localStorage.setItem('geetakalp_image_cache_updated_at', new Date().toISOString());
+        } catch (error) {
+            // Cache Storage holds the actual image files; this manifest is best-effort only.
+        }
+    }
+
     function postToImageCache(message) {
         if (navigator.serviceWorker.controller) {
             navigator.serviceWorker.controller.postMessage(message);
             return;
         }
+
+        navigator.serviceWorker.ready.then((registration) => {
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage(message);
+                return;
+            }
+
+            if (registration.active) {
+                registration.active.postMessage(message);
+            }
+        }).catch(() => {});
 
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (navigator.serviceWorker.controller) {
@@ -51,7 +77,9 @@
     function cacheCurrentPageImages(root) {
         const urls = collectImageUrls(root);
         if (urls.length > 0) {
-            postToImageCache({ type: 'CACHE_IMAGE_URLS', urls });
+            const uniqueUrls = Array.from(new Set(urls));
+            rememberImageUrls(uniqueUrls);
+            postToImageCache({ type: 'CACHE_IMAGE_URLS', urls: uniqueUrls });
         }
     }
 
@@ -87,7 +115,9 @@
                 .filter(Boolean);
 
             if (urls.length > 0) {
-                postToImageCache({ type: 'CACHE_IMAGE_URLS', urls: Array.from(new Set(urls)) });
+                const uniqueUrls = Array.from(new Set(urls));
+                rememberImageUrls(uniqueUrls);
+                postToImageCache({ type: 'CACHE_IMAGE_URLS', urls: uniqueUrls });
             }
         } catch (error) {
             console.warn('Product image cache warmup failed:', error);
@@ -108,6 +138,13 @@
     window.geetaKalpImageCache = {
         cacheCurrentPageImages,
         cacheCatalogProductImages,
+        getCachedImageManifest() {
+            try {
+                return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '[]');
+            } catch (error) {
+                return [];
+            }
+        },
         deleteImageUrl(url) {
             const src = absoluteUrl(url);
             if (src) postToImageCache({ type: 'DELETE_IMAGE_URL', url: src });

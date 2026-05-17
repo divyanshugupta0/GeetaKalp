@@ -2,12 +2,13 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../firebase-admin-config');
 const { normalizeProductImages } = require('../services/r2ImageUrls');
+const { validateCheckoutTokenMiddleware, requireCheckoutTokenMiddleware } = require('../middleware/checkoutAuth');
 
 // ─── Homepage ───
 router.get('/', async (req, res) => {
     try {
         const [snapshot, newArrivalsSnap] = await Promise.all([
-            db.ref('products').orderByChild('createdAt').limitToLast(12).once('value'),
+            db.ref('products').orderByChild('createdAt').once('value'),
             db.ref('settings/newArrivalProductIds').once('value')
         ]);
         const products = [];
@@ -189,7 +190,7 @@ router.get('/cart', (req, res) => {
 });
 
 // ─── Checkout Page ───
-router.get('/checkout', async (req, res) => {
+router.get('/checkout', requireCheckoutTokenMiddleware, async (req, res) => {
     try {
         const settingsSnap = await db.ref('settings').once('value');
         const settings = settingsSnap.val() || {};
@@ -199,7 +200,8 @@ router.get('/checkout', async (req, res) => {
             title: 'Checkout | Geeta Kalp',
             metaDescription: 'Complete your purchase securely at Geeta Kalp.',
             canonicalUrl: `${req.protocol}://${req.get('host')}/checkout`,
-            paymentSettings: paymentMethods
+            paymentSettings: paymentMethods,
+            checkoutToken: res.locals.checkoutToken || null
         });
     } catch (error) {
         console.error('Error loading checkout:', error);
@@ -208,12 +210,13 @@ router.get('/checkout', async (req, res) => {
 });
 
 // ─── Order Success ───
-router.get('/order-success', (req, res) => {
+router.get('/order-success', requireCheckoutTokenMiddleware, (req, res) => {
     res.render('order-success', {
         title: 'Order Confirmed | Geeta Kalp',
         metaDescription: 'Your order has been successfully placed at Geeta Kalp.',
         orderId: req.query.orderId || '',
-        canonicalUrl: `${req.protocol}://${req.get('host')}/order-success`
+        canonicalUrl: `${req.protocol}://${req.get('host')}/order-success`,
+        checkoutToken: res.locals.checkoutToken || null
     });
 });
 

@@ -1,5 +1,29 @@
 <%- include('partials/header') %>
 
+<style>
+    .footer {
+        display: none;
+    }
+</style>
+
+<script>
+    (function preventCheckoutHistoryRevisit() {
+        const redirectTarget = '/cart';
+        const navEntry = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+
+        if (navEntry && navEntry.type === 'back_forward') {
+            window.location.replace(redirectTarget);
+            return;
+        }
+
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                window.location.replace(redirectTarget);
+            }
+        });
+    })();
+</script>
+
 <section class="page-hero page-hero-sm">
     <div class="container">
         <h1 class="page-title">Checkout</h1>
@@ -8,7 +32,15 @@
 
 <section class="section checkout-section">
     <div class="container">
-        <div class="checkout-layout">
+        <!-- Loading State -->
+        <div id="checkoutLoading" style="text-align: center; padding: 60px 20px; display: none;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 16px;"></i>
+            <p style="color: var(--text-muted); margin: 0;">Processing your order...</p>
+        </div>
+
+        <!-- Checkout Content -->
+        <div id="checkoutContent" style="display: block;">
+            <div class="checkout-layout">
             <!-- Checkout Form -->
             <div class="checkout-form-wrap">
                 <form id="checkoutForm" onsubmit="processCheckout(event)">
@@ -129,6 +161,7 @@
                     <span id="checkoutTotal">₹0</span>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 </section>
@@ -279,6 +312,22 @@
         } catch { return null; }
     }
 
+    function openOrderSuccess(orderId, token) {
+        if (!orderId) {
+            window.location.replace('/profile#orders');
+            return;
+        }
+
+        try {
+            sessionStorage.setItem('geetakalp_order_success_order_id', String(orderId));
+        } catch (err) {
+            console.warn('Unable to mark order success navigation', err);
+        }
+
+        const url = token ? `/order-success?orderId=${encodeURIComponent(orderId)}&token=${encodeURIComponent(token)}` : `/order-success?orderId=${encodeURIComponent(orderId)}`;
+        window.location.replace(url);
+    }
+
     let checkoutUser = null;
     let hasSavedAddress = false;
 
@@ -350,6 +399,18 @@
         }
     }
 
+    // Show loader and hide checkout form
+    function showCheckoutLoader() {
+        document.getElementById('checkoutLoading').style.display = 'block';
+        document.getElementById('checkoutContent').style.display = 'none';
+    }
+
+    // Hide loader and show checkout form
+    function hideCheckoutLoader() {
+        document.getElementById('checkoutLoading').style.display = 'none';
+        document.getElementById('checkoutContent').style.display = 'block';
+    }
+
     // Call once on load to set initial text
     document.addEventListener('DOMContentLoaded', () => {
         updatePaymentBtn();
@@ -360,9 +421,26 @@
         const btn = document.getElementById('payBtn');
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        
+        // Show loader
+        showCheckoutLoader();
 
         const cart = getCart();
         if (!cart || cart.length === 0) {
+            hideCheckoutLoader();
+            window.location.href = '/cart';
+            return;
+        }
+
+        // Get checkout token from URL or session storage
+        const urlParams = new URLSearchParams(window.location.search);
+        const checkoutToken = urlParams.get('token') || sessionStorage.getItem('geetakalp_checkout_token');
+
+        if (!checkoutToken) {
+            hideCheckoutLoader();
+            showToast('Checkout session expired. Please start over.', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-lock"></i> Pay Securely';
             window.location.href = '/cart';
             return;
         }
@@ -436,6 +514,7 @@
                     currency: 'INR',
                     customerInfo,
                     coupon: appliedCouponInfo,
+                    checkoutToken: checkoutToken,
                     items: cart.map(item => ({
                         id: item.id,
                         name: item.name,
@@ -454,7 +533,7 @@
             // Check if payment is required (e.g. 100% COD bypasses Razorpay)
             if (!data.requiresPayment) {
                 clearCart();
-                window.location.href = `/order-success?orderId=${data.orderId}`;
+                openOrderSuccess(data.orderId, checkoutToken);
                 return;
             }
 
@@ -465,7 +544,7 @@
                 // Demo mode - simulate success
                 showToast('Demo mode: Simulating payment success');
                 clearCart();
-                window.location.href = `/order-success?orderId=${data.orderId}`;
+                openOrderSuccess(data.orderId, checkoutToken);
                 return;
             }
 
@@ -498,7 +577,7 @@
                     const verifyData = await verifyRes.json();
                     if (verifyData.success) {
                         clearCart();
-                        window.location.href = `/order-success?orderId=${data.orderId}`;
+                        openOrderSuccess(data.orderId, checkoutToken);
                     } else {
                         showToast('Payment verification failed. Please contact support.', 'error');
                     }

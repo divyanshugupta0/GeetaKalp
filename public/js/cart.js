@@ -79,3 +79,51 @@ function showToast(message, type = 'success') {
 
 // Initialize cart count on page load
 document.addEventListener('DOMContentLoaded', updateCartCount);
+
+// ─── Generate Checkout Token & Proceed ───
+async function proceedToCheckout(event) {
+    event.preventDefault();
+    
+    const cart = getCart();
+    if (!cart || cart.length === 0) {
+        showToast('Your cart is empty!', 'error');
+        return;
+    }
+
+    try {
+        // Show loading state
+        const checkoutBtn = document.getElementById('checkoutBtn');
+        const originalText = checkoutBtn.innerHTML;
+        checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Checkout Session...';
+        checkoutBtn.style.pointerEvents = 'none';
+
+        // Generate checkout token from server
+        const response = await fetch('/api/generate-checkout-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+
+        const data = await response.json();
+
+        if (!data.success || !data.token) {
+            showToast('Failed to initialize checkout. Please try again.', 'error');
+            checkoutBtn.innerHTML = originalText;
+            checkoutBtn.style.pointerEvents = 'auto';
+            return;
+        }
+
+        // Store token in session storage for use in checkout form
+        sessionStorage.setItem('geetakalp_checkout_token', data.token);
+
+        // Redirect to checkout with token
+        window.location.href = `/checkout?token=${data.token}`;
+    } catch (error) {
+        console.error('Checkout token error:', error);
+        showToast('An error occurred. Please try again.', 'error');
+        const checkoutBtn = document.getElementById('checkoutBtn');
+        checkoutBtn.innerHTML = originalText;
+        checkoutBtn.style.pointerEvents = 'auto';
+    }
+}
+

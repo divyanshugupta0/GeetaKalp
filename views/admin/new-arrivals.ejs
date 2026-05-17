@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+    <%- include('../partials/admin-sidebar', { activePage: 'new-arrivals' }) %>
+
+    <main class="admin-main">
+        <header class="admin-header">
+            <button class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+            <h2 class="admin-page-title">New Arrivals</h2>
+            <button class="btn btn-primary btn-sm" onclick="saveNewArrivals()" id="saveNewArrivalsBtn"><i class="fas fa-save"></i> Save Selection</button>
+        </header>
+
+        <div class="admin-content">
+            <div class="admin-section">
+                <div class="section-header-bar">
+                    <h3><i class="fas fa-star"></i> Homepage New Arrivals</h3>
+                    <span id="selectedCount" class="text-muted">0 selected</span>
+                </div>
+                <p style="margin: 0 0 16px; color: var(--text-muted); font-size: 0.9rem;">Select products to show in the homepage New Arrivals section. The homepage displays the first 4 selected products.</p>
+                <div id="newArrivalsMessage" style="min-height: 20px; margin-bottom: 12px; font-size: 0.9rem;"></div>
+                <div id="newArrivalsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px;">
+                    <div class="table-empty">Loading products...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentToken = '';
+        let products = [];
+        let selectedIds = new Set();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            currentToken = localStorage.getItem('adminToken');
+            if (!currentToken) {
+                window.location.href = '/admin/login';
+                return;
+            }
+            loadNewArrivals();
+        });
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        async function loadNewArrivals() {
+            const list = document.getElementById('newArrivalsList');
+            list.innerHTML = '<div class="table-empty">Loading products...</div>';
+
+            try {
+                const [productsRes, selectedRes] = await Promise.all([
+                    fetch('/api/products'),
+                    fetch('/api/new-arrivals', { headers: { 'Authorization': `Bearer ${currentToken}` } })
+                ]);
+                const productsData = await productsRes.json();
+                const selectedData = await selectedRes.json();
+
+                products = productsData.success ? productsData.products.filter(p => p.active !== false) : [];
+                selectedIds = new Set(selectedData.success ? selectedData.productIds : []);
+                renderProducts();
+            } catch (error) {
+                console.error('Load new arrivals error:', error);
+                list.innerHTML = '<div class="table-empty">Failed to load products</div>';
+            }
+        }
+
+        function renderProducts() {
+            const list = document.getElementById('newArrivalsList');
+            if (products.length === 0) {
+                list.innerHTML = '<div class="table-empty">No active products available</div>';
+                updateSelectedCount();
+                return;
+            }
+
+            list.innerHTML = products.map(product => {
+                const checked = selectedIds.has(product.id) ? 'checked' : '';
+                return `
+                    <label style="display: flex; gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-card); cursor: pointer;">
+                        <input type="checkbox" class="new-arrival-check" value="${product.id}" ${checked} onchange="updateSelectedCount()" style="width: 18px; height: 18px;">
+                        <div style="width: 56px; height: 56px; border-radius: var(--radius-sm); overflow: hidden; background: var(--bg-elevated); flex: 0 0 auto;">
+                            ${product.images && product.images[0] ? `<img src="${product.images[0]}" alt="" style="width: 100%; height: 100%; object-fit: cover;">` : '<i class="fas fa-image" style="display: grid; place-items: center; height: 100%; color: var(--text-muted);"></i>'}
+                        </div>
+                        <div style="min-width: 0;">
+                            <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(product.name)}</div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted);">${escapeHtml(product.category || 'General')} • ₹${Number(product.salePrice || 0).toLocaleString('en-IN')}</div>
+                        </div>
+                    </label>
+                `;
+            }).join('');
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const count = document.querySelectorAll('.new-arrival-check:checked').length;
+            document.getElementById('selectedCount').textContent = `${count} selected`;
+        }
+
+        async function saveNewArrivals() {
+            const btn = document.getElementById('saveNewArrivalsBtn');
+            const message = document.getElementById('newArrivalsMessage');
+            const productIds = Array.from(document.querySelectorAll('.new-arrival-check:checked')).map(input => input.value);
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            message.textContent = '';
+
+            try {
+                const res = await fetch('/api/new-arrivals', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify({ productIds })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Failed to save');
+
+                selectedIds = new Set(data.productIds);
+                message.style.color = 'var(--success)';
+                message.textContent = `Saved ${data.productIds.length} product${data.productIds.length === 1 ? '' : 's'} for New Arrivals.`;
+                updateSelectedCount();
+            } catch (error) {
+                console.error('Save new arrivals error:', error);
+                message.style.color = 'var(--danger)';
+                message.textContent = error.message || 'Failed to save New Arrivals';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save Selection';
+            }
+        }
+
+        function adminLogout() {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminEmail');
+            window.location.href = '/admin/login';
+        }
+
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            document.getElementById('adminSidebar').classList.toggle('collapsed');
+        });
+    </script>
+</body>
+</html>

@@ -81,6 +81,19 @@
                 </div>
             </div>
 
+            <!-- New Arrivals Manager -->
+            <div class="admin-section">
+                <div class="section-header-bar">
+                    <h3><i class="fas fa-star"></i> Manage New Arrivals</h3>
+                    <button class="btn btn-sm btn-primary" onclick="saveNewArrivals()" id="saveNewArrivalsBtn">Save Selection</button>
+                </div>
+                <p style="margin: 0 0 16px; color: var(--text-muted); font-size: 0.9rem;">Select the products that should appear in the homepage New Arrivals section.</p>
+                <div id="newArrivalsMessage" style="min-height: 20px; margin-bottom: 12px; font-size: 0.9rem;"></div>
+                <div id="newArrivalsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px;">
+                    <div class="table-empty">Loading products...</div>
+                </div>
+            </div>
+
             <!-- Recent Orders -->
             <div class="admin-section">
                 <div class="section-header-bar">
@@ -118,8 +131,21 @@
             } else {
                 document.getElementById('adminEmail').textContent = localStorage.getItem('adminEmail') || 'Admin';
                 loadDashboard();
+                loadNewArrivalsManager();
             }
         });
+
+        let dashboardProducts = [];
+        let selectedNewArrivalIds = new Set();
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
 
         async function loadDashboard() {
             try {
@@ -158,6 +184,92 @@
                 }
             } catch (error) {
                 console.error('Dashboard load error:', error);
+            }
+        }
+
+        async function loadNewArrivalsManager() {
+            const token = localStorage.getItem('adminToken');
+            const list = document.getElementById('newArrivalsList');
+            const message = document.getElementById('newArrivalsMessage');
+            message.textContent = '';
+            list.innerHTML = '<div class="table-empty">Loading products...</div>';
+
+            try {
+                const [productsRes, selectedRes] = await Promise.all([
+                    fetch('/api/products'),
+                    fetch('/api/new-arrivals', { headers: { 'Authorization': `Bearer ${token}` } })
+                ]);
+                const productsData = await productsRes.json();
+                const selectedData = await selectedRes.json();
+
+                dashboardProducts = productsData.success ? productsData.products.filter(p => p.active !== false) : [];
+                selectedNewArrivalIds = new Set(selectedData.success ? selectedData.productIds : []);
+
+                renderNewArrivalsManager();
+            } catch (error) {
+                console.error('New arrivals load error:', error);
+                list.innerHTML = '<div class="table-empty">Failed to load products</div>';
+            }
+        }
+
+        function renderNewArrivalsManager() {
+            const list = document.getElementById('newArrivalsList');
+            if (dashboardProducts.length === 0) {
+                list.innerHTML = '<div class="table-empty">No active products available</div>';
+                return;
+            }
+
+            list.innerHTML = dashboardProducts.map(product => {
+                const checked = selectedNewArrivalIds.has(product.id) ? 'checked' : '';
+                const productName = escapeHtml(product.name);
+                const category = escapeHtml(product.category || 'General');
+                return `
+                    <label style="display: flex; gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-card); cursor: pointer;">
+                        <input type="checkbox" class="new-arrival-check" value="${product.id}" ${checked} style="width: 18px; height: 18px;">
+                        <div style="width: 52px; height: 52px; border-radius: var(--radius-sm); overflow: hidden; background: var(--bg-elevated); flex: 0 0 auto;">
+                            ${product.images && product.images[0] ? `<img src="${product.images[0]}" alt="" style="width: 100%; height: 100%; object-fit: cover;">` : '<i class="fas fa-image" style="display: grid; place-items: center; height: 100%; color: var(--text-muted);"></i>'}
+                        </div>
+                        <div style="min-width: 0;">
+                            <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${productName}</div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted);">${category} • ₹${Number(product.salePrice || 0).toLocaleString('en-IN')}</div>
+                        </div>
+                    </label>
+                `;
+            }).join('');
+        }
+
+        async function saveNewArrivals() {
+            const token = localStorage.getItem('adminToken');
+            const btn = document.getElementById('saveNewArrivalsBtn');
+            const message = document.getElementById('newArrivalsMessage');
+            const productIds = Array.from(document.querySelectorAll('.new-arrival-check:checked')).map(input => input.value);
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            message.textContent = '';
+
+            try {
+                const res = await fetch('/api/new-arrivals', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ productIds })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Failed to save');
+
+                selectedNewArrivalIds = new Set(data.productIds);
+                message.style.color = 'var(--success)';
+                message.textContent = `Saved ${data.productIds.length} New Arrival product${data.productIds.length === 1 ? '' : 's'}.`;
+            } catch (error) {
+                console.error('New arrivals save error:', error);
+                message.style.color = 'var(--danger)';
+                message.textContent = error.message || 'Failed to save New Arrivals';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Selection';
             }
         }
 

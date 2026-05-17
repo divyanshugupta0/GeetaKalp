@@ -26,6 +26,13 @@ router.get('/products', (req, res) => {
     });
 });
 
+router.get('/new-arrivals', (req, res) => {
+    res.render('admin/new-arrivals', {
+        title: 'Manage New Arrivals | Geeta Kalp',
+        metaDescription: 'Choose products for the homepage New Arrivals section.'
+    });
+});
+
 // ─── Orders Management Page ───
 router.get('/orders', (req, res) => {
     res.render('admin/orders', {

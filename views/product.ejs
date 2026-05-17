@@ -37,6 +37,9 @@
                         <span class="badge badge-discount badge-lg">-<%= product.discountPercent %>%</span>
                         <% } %>
                     </div>
+                    <button type="button" class="product-share-btn" onclick="shareProduct()" aria-label="Share product">
+                        <i class="fas fa-share-nodes"></i>
+                    </button>
                 </div>
                 <% if (product.images && product.images.length > 1) { %>
                 <div class="thumbnail-row">
@@ -159,11 +162,13 @@
                 <div class="product-card">
                     <a href="/product/<%= rp.id %>" class="product-card-link">
                         <div class="product-image-wrap">
+                            <div class="product-image-mask">
                             <% if (rp.images && rp.images.length > 0) { %>
                             <img src="<%= rp.images[0] %>" alt="<%= rp.name %>" class="product-image" loading="lazy">
                             <% } else { %>
                             <div class="product-image product-placeholder"><i class="fas fa-image"></i></div>
                             <% } %>
+                            </div>
                             <div class="product-badges">
                                 <% const relatedBadgeType = rp.productBadgeType || (rp.isNew ? 'new' : 'none'); %>
                                 <% if (relatedBadgeType === 'new') { %><span class="badge badge-new">NEW</span><% } %>
@@ -225,6 +230,31 @@
         if (val < 1) val = 1;
         if (val > parseInt(input.max)) val = parseInt(input.max);
         input.value = val;
+    }
+
+    async function shareProduct() {
+        const shareData = {
+            title: <%- JSON.stringify(product.name) %>,
+            text: <%- JSON.stringify(`Check out ${product.name} on Geeta Kalp`) %>,
+            url: window.location.href
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+                return;
+            }
+
+            await navigator.clipboard.writeText(window.location.href);
+            if (typeof showToast === 'function') {
+                showToast('Product link copied');
+            }
+        } catch (error) {
+            if (error && error.name === 'AbortError') return;
+            if (typeof showToast === 'function') {
+                showToast('Could not share product', 'error');
+            }
+        }
     }
 </script>
 
