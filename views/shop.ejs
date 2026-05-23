@@ -73,7 +73,13 @@
                             <button class="quick-add-btn" onclick="event.preventDefault(); addToCart('<%= product.id %>', '<%= product.name %>', <%= product.salePrice %>, <%= product.originalPrice %>, '<%= product.images && product.images[0] ? product.images[0] : '' %>')">
                                 <i class="fas fa-shopping-bag"></i> Add to Cart
                             </button>
+                            <button class="quick-view-trigger" onclick="event.preventDefault(); openQuickView('<%= product.id %>')" aria-label="Quick View">
+                                <i class="fas fa-eye"></i>
+                            </button>
                         </div>
+                        <button class="wishlist-btn" data-wishlist-id="<%= product.id %>" onclick="event.preventDefault(); WishlistManager.toggle('<%= product.id %>')" aria-label="Add to wishlist">
+                            <i class="far fa-heart"></i>
+                        </button>
                     </div>
                     <div class="product-info">
                         <span class="product-category"><%= product.category %></span>
@@ -111,8 +117,85 @@
         <% if (searchQuery) { %>
         params.set('search', '<%= searchQuery %>');
         <% } %>
+        if (typeof SkelKit !== 'undefined') {
+            SkelKit.auto('.product-card');
+        }
         window.location.href = '/shop' + (params.toString() ? '?' + params.toString() : '');
     }
+</script>
+
+<!-- Quick View Modal -->
+<div class="quickview-overlay" id="quickviewOverlay" onclick="if(event.target===this)closeQuickView()">
+    <div class="quickview-modal">
+        <button class="quickview-close" onclick="closeQuickView()"><i class="fas fa-times"></i></button>
+        <div class="quickview-body">
+            <div class="quickview-image"><img id="qvImage" src="" alt=""></div>
+            <div class="quickview-info">
+                <span class="quickview-category" id="qvCategory"></span>
+                <h2 class="quickview-name" id="qvName"></h2>
+                <div class="quickview-pricing">
+                    <span class="quickview-price" id="qvPrice"></span>
+                    <span class="quickview-original" id="qvOriginal"></span>
+                    <span class="quickview-discount" id="qvDiscount"></span>
+                </div>
+                <p class="quickview-desc" id="qvDesc"></p>
+                <div class="quickview-stock" id="qvStock"></div>
+                <div class="quickview-actions">
+                    <button class="btn btn-primary" id="qvAddToCart"><i class="fas fa-shopping-bag"></i> Add to Cart</button>
+                    <a class="btn btn-outline" id="qvViewFull" href="#">View Full Details</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    let qvProductsCache = {};
+    async function openQuickView(productId) {
+        const overlay = document.getElementById('quickviewOverlay');
+        overlay.classList.add('active');
+        document.body.classList.add('modal-open');
+
+        const targets = ['#qvImage', '#qvCategory', '#qvName', '#qvPrice', '#qvDesc', '#qvStock', '#qvAddToCart', '#qvViewFull'];
+        const isLoaded = !!qvProductsCache[productId];
+
+        if (!isLoaded && typeof SkelKit !== 'undefined') {
+            targets.forEach(t => SkelKit.auto(t));
+        }
+
+        try {
+            if (!isLoaded) {
+                const res = await fetch(`/api/products/${productId}`);
+                const data = await res.json();
+                if (data.success) qvProductsCache[productId] = data.product;
+            }
+            const p = qvProductsCache[productId];
+            if (!p) return;
+            document.getElementById('qvImage').src = (p.images && p.images[0]) || '';
+            document.getElementById('qvCategory').textContent = p.category || 'General';
+            document.getElementById('qvName').textContent = p.name;
+            document.getElementById('qvPrice').textContent = '₹' + Number(p.salePrice).toLocaleString('en-IN');
+            const orig = document.getElementById('qvOriginal');
+            const disc = document.getElementById('qvDiscount');
+            if (p.originalPrice > p.salePrice) {
+                orig.textContent = '₹' + Number(p.originalPrice).toLocaleString('en-IN'); orig.style.display = '';
+                disc.textContent = '-' + Math.round(((p.originalPrice - p.salePrice) / p.originalPrice) * 100) + '% OFF'; disc.style.display = '';
+            } else { orig.style.display = 'none'; disc.style.display = 'none'; }
+            document.getElementById('qvDesc').textContent = p.description || '';
+            const stockEl = document.getElementById('qvStock');
+            stockEl.className = p.stock > 0 ? 'quickview-stock in-stock' : 'quickview-stock out-stock';
+            stockEl.innerHTML = p.stock > 0 ? '<i class="fas fa-check-circle"></i> In Stock (' + p.stock + ')' : '<i class="fas fa-times-circle"></i> Out of Stock';
+            document.getElementById('qvAddToCart').onclick = () => { addToCart(p.id, p.name, p.salePrice, p.originalPrice, (p.images && p.images[0]) || ''); closeQuickView(); };
+            document.getElementById('qvViewFull').href = '/product/' + p.id;
+        } catch (e) { 
+            console.error('Quick view error:', e); 
+        } finally {
+            if (typeof SkelKit !== 'undefined') {
+                targets.forEach(t => SkelKit.reveal(t));
+            }
+        }
+    }
+    function closeQuickView() { document.getElementById('quickviewOverlay').classList.remove('active'); document.body.classList.remove('modal-open'); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeQuickView(); });
 </script>
 
 <%- include('partials/footer') %>

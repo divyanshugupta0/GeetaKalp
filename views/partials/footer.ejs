@@ -12,8 +12,13 @@
                         <span class="logo-icon">✦</span>
                         <span class="logo-text">Geeta Kalp</span>
                     </div>
-                    <p class="footer-desc">Your trusted destination for premium products at the best prices. Quality you can feel, prices you'll love.</p>
-                    <div class="footer-social">
+                    <p class="footer-desc">Your trusted destination for premium botanical products. Quality you can feel, prices you'll love.</p>
+                    <form class="newsletter-form" id="newsletterForm" onsubmit="subscribeNewsletter(event)">
+                        <input type="email" class="newsletter-input" id="newsletterEmail" placeholder="Your email address" required>
+                        <button type="submit" class="newsletter-submit" id="newsletterBtn">Subscribe</button>
+                    </form>
+                    <div class="newsletter-message" id="newsletterMsg"></div>
+                    <div class="footer-social" style="margin-top: 20px;">
                         <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
                         <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
                         <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
@@ -32,10 +37,10 @@
                 <div class="footer-col">
                     <h4>Customer Service</h4>
                     <ul>
-                        <li><a href="#">Track Order</a></li>
-                        <li><a href="#">Returns & Refunds</a></li>
-                        <li><a href="#">Shipping Policy</a></li>
-                        <li><a href="#">FAQ</a></li>
+                        <li><a href="/profile#orders">Track Order</a></li>
+                        <li><a href="/contact">Returns & Refunds</a></li>
+                        <li><a href="/about">Shipping Policy</a></li>
+                        <li><a href="/contact">FAQ</a></li>
                     </ul>
                 </div>
                 <div class="footer-col">
@@ -58,6 +63,16 @@
             </div>
         </div>
     </footer>
+
+    <!-- WhatsApp Floating Button -->
+    <a href="https://wa.me/919999999999?text=Hi!%20I'm%20interested%20in%20your%20products" target="_blank" class="whatsapp-float" id="whatsappFloat" aria-label="Chat on WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
 
     <!-- Customer Login Modal -->
     <div class="modal-overlay" id="customerLoginModal">
@@ -120,10 +135,14 @@
         </div>
     </div>
 
+    <!-- SkelKit Skeleton Loading Library -->
+    <script src="/skelkit/skelkit.umd.js"></script>
     <!-- Cart JS (loaded on all pages for cart count) -->
     <script src="/js/cart.js"></script>
     <!-- Auth JS (Customer auth state) -->
     <script src="/js/auth.js"></script>
+    <!-- Wishlist JS -->
+    <script src="/js/wishlist.js"></script>
     <!-- Device-side image cache -->
     <script src="/js/image-cache.js"></script>
 
@@ -220,6 +239,51 @@
                 }
             }
         }, true);
+    </script>
+
+    <!-- Newsletter Subscription -->
+    <script>
+        async function subscribeNewsletter(e) {
+            e.preventDefault();
+            const email = document.getElementById('newsletterEmail').value;
+            const btn = document.getElementById('newsletterBtn');
+            const msg = document.getElementById('newsletterMsg');
+            btn.disabled = true;
+            btn.textContent = '...';
+            try {
+                const res = await fetch('/api/newsletter/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    msg.style.color = '#66df6c';
+                    msg.textContent = '✓ ' + data.message;
+                    document.getElementById('newsletterEmail').value = '';
+                } else {
+                    msg.style.color = '#fca5a5';
+                    msg.textContent = data.error || 'Subscription failed';
+                }
+            } catch (err) {
+                msg.style.color = '#fca5a5';
+                msg.textContent = 'Network error. Please try again.';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Subscribe';
+            }
+        }
+    </script>
+
+    <!-- Back to Top -->
+    <script>
+        const backToTopBtn = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            backToTopBtn.classList.toggle('visible', window.scrollY > 400);
+        });
+        backToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
     </script>
 </body>
 </html>

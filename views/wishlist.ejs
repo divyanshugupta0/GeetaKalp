@@ -1,0 +1,308 @@
+<%- include('partials/header') %>
+
+<section class="page-hero page-hero-sm">
+    <div class="container">
+        <h1 class="page-title">My Wishlist</h1>
+        <p class="page-subtitle">Your curated selection of natural wellness botanical luxuries</p>
+    </div>
+</section>
+
+<section class="section wishlist-section">
+    <div class="container">
+        <div id="unauthWishlist" class="wishlist-empty-state" style="display: none;">
+            <div class="wishlist-icon-wrap">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h3>Authentication Required</h3>
+            <p style="color: var(--text-muted); margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto;">Please log in to view your saved products and manage your wishlist.</p>
+            <button class="btn btn-primary" onclick="openLoginModal()">Login Now</button>
+        </div>
+
+        <div id="authWishlist" style="display: none;">
+            <div class="products-grid" id="wishlistGrid">
+                <!-- Populated dynamically by JS -->
+            </div>
+            
+            <div id="wishlistEmpty" class="wishlist-empty-state" style="display: none;">
+                <div class="wishlist-icon-wrap">
+                    <i class="far fa-heart"></i>
+                </div>
+                <h3>Your Wishlist is Empty</h3>
+                <p style="color: var(--text-muted); margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto;">Browse our shop and add your favorite botanical products to your personal wishlist.</p>
+                <a href="/shop" class="btn btn-primary">Explore Products</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Include Quick View Modal Elements (copied from shop.ejs to keep quick view functional) -->
+<div class="quickview-overlay" id="quickviewOverlay" onclick="if(event.target===this)closeQuickView()">
+    <div class="quickview-modal">
+        <button class="quickview-close" onclick="closeQuickView()"><i class="fas fa-times"></i></button>
+        <div class="quickview-body">
+            <div class="quickview-image"><img id="qvImage" src="" alt=""></div>
+            <div class="quickview-info">
+                <span class="quickview-category" id="qvCategory"></span>
+                <h2 class="quickview-name" id="qvName"></h2>
+                <div class="quickview-pricing">
+                    <span class="quickview-price" id="qvPrice"></span>
+                    <span class="quickview-original" id="qvOriginal"></span>
+                    <span class="quickview-discount" id="qvDiscount"></span>
+                </div>
+                <p class="quickview-desc" id="qvDesc"></p>
+                <div class="quickview-stock" id="qvStock"></div>
+                <div class="quickview-actions">
+                    <button class="btn btn-primary" id="qvAddToCart"><i class="fas fa-shopping-bag"></i> Add to Cart</button>
+                    <a class="btn btn-outline" id="qvViewFull" href="#">View Full Details</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .wishlist-section {
+        padding-top: 60px;
+        padding-bottom: 100px;
+    }
+    .wishlist-empty-state {
+        text-align: center;
+        padding: 80px 24px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .wishlist-icon-wrap {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--bg-elevated);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        color: var(--primary);
+        font-size: 2.2rem;
+        border: 1px solid var(--border);
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+    }
+    .wishlist-empty-state h3 {
+        font-family: var(--font-display);
+        font-size: 1.8rem;
+        font-weight: 500;
+        margin-bottom: 12px;
+        color: var(--text);
+    }
+    
+    /* Animations for active removal */
+    .product-card.pop-out {
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+    }
+
+    @media (max-width: 768px) {
+        .wishlist-section {
+            padding-top: 40px;
+            padding-bottom: 60px;
+        }
+        .wishlist-empty-state {
+            padding: 48px 16px;
+        }
+    }
+</style>
+
+<script>
+    let profileUser = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        firebase.auth().onAuthStateChanged(user => {
+            profileUser = user;
+            if (user) {
+                document.getElementById('unauthWishlist').style.display = 'none';
+                document.getElementById('authWishlist').style.display = 'block';
+                loadWishlistDetails(user.uid);
+            } else {
+                document.getElementById('unauthWishlist').style.display = 'block';
+                document.getElementById('authWishlist').style.display = 'none';
+            }
+        });
+    });
+
+    async function loadWishlistDetails(uid) {
+        const grid = document.getElementById('wishlistGrid');
+        const emptyState = document.getElementById('wishlistEmpty');
+        
+        // Show premium circular card skeletons using skelkit data attributes!
+        let skeletonHtml = '';
+        for (let i = 0; i < 4; i++) {
+            skeletonHtml += `
+                <div class="product-card" style="pointer-events: none;">
+                    <div class="product-card-link">
+                        <div class="product-image-wrap" data-skelkit="circle" data-skelkit-animation="shimmer" style="width: 100%; max-width: 260px; aspect-ratio: 1; border-radius: 50%;"></div>
+                        <div class="product-info" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 60px; height: 10px; border-radius: 4px;"></div>
+                            <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 180px; height: 18px; border-radius: 4px;"></div>
+                            <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 100px; height: 14px; border-radius: 4px;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        grid.innerHTML = skeletonHtml;
+        grid.style.display = 'grid';
+        emptyState.style.display = 'none';
+        
+        // Trigger SkelKit scanning and activation
+        if (typeof SkelKit !== 'undefined') {
+            SkelKit.refresh();
+        }
+        
+        try {
+            const res = await fetch(`/api/wishlist-details/${uid}`);
+            const data = await res.json();
+            
+            if (!data.success || !data.products || data.products.length === 0) {
+                grid.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            grid.style.display = 'grid';
+            emptyState.style.display = 'none';
+            
+            grid.innerHTML = data.products.map(product => {
+                const hasDiscount = product.originalPrice > product.salePrice;
+                const discountPercent = hasDiscount ? Math.round(((product.originalPrice - product.salePrice) / product.originalPrice) * 100) : 0;
+                const badgeType = product.productBadgeType || (product.isNew ? 'new' : 'none');
+                
+                let badgesHtml = '';
+                if (badgeType === 'new') {
+                    badgesHtml += `<span class="badge badge-new">NEW</span>`;
+                } else if (badgeType === 'trending') {
+                    badgesHtml += `<span class="badge badge-trending">Trending</span>`;
+                } else if (badgeType === 'custom' && product.productBadgeText) {
+                    badgesHtml += `<span class="badge badge-custom">${product.productBadgeText}</span>`;
+                }
+                if (hasDiscount) {
+                    badgesHtml += `<span class="badge badge-discount">-${discountPercent}%</span>`;
+                }
+                
+                const imageHtml = product.images && product.images.length > 0 
+                    ? `<img src="${product.images[0]}" alt="${product.name}" class="product-image" loading="lazy">`
+                    : `<div class="product-image product-placeholder"><i class="fas fa-image"></i></div>`;
+                
+                return `
+                    <div class="product-card" id="wishlist-card-${product.id}" style="animation: fadeIn 0.6s ease forwards;">
+                        <a href="/product/${product.id}" class="product-card-link">
+                            <div class="product-image-wrap">
+                                <div class="product-image-mask">
+                                    ${imageHtml}
+                                </div>
+                                <div class="product-badges">
+                                    ${badgesHtml}
+                                </div>
+                                <div class="product-overlay">
+                                    <button class="quick-add-btn" onclick="event.preventDefault(); addToCart('${product.id}', '${product.name.replace(/'/g, "\\'")}', ${product.salePrice}, ${product.originalPrice || product.salePrice}, '${product.images && product.images[0] ? product.images[0] : ''}')">
+                                        <i class="fas fa-shopping-bag"></i> Add to Cart
+                                    </button>
+                                    <button class="quick-view-trigger" onclick="event.preventDefault(); openQuickView('${product.id}')" aria-label="Quick View">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <button class="wishlist-btn active animate-pop" data-wishlist-id="${product.id}" onclick="event.preventDefault(); handleWishlistRemove('${product.id}')" aria-label="Remove from wishlist">
+                                    <i class="fas fa-heart"></i>
+                                </button>
+                            </div>
+                            <div class="product-info">
+                                <span class="product-category">${product.category || 'General'}</span>
+                                <h3 class="product-name">${product.name}</h3>
+                                <div class="product-pricing">
+                                    <span class="current-price">₹${product.salePrice.toLocaleString('en-IN')}</span>
+                                    ${hasDiscount ? `<span class="original-price">₹${product.originalPrice.toLocaleString('en-IN')}</span>` : ''}
+                                    ${hasDiscount ? `<span class="discount-tag">Save ₹${(product.originalPrice - product.salePrice).toLocaleString('en-IN')}</span>` : ''}
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                `;
+            }).join('');
+            
+        } catch (e) {
+            console.error('Error loading wishlist products:', e);
+            grid.innerHTML = `<div style="grid-column: 1 / -1; color: var(--danger); text-align: center; padding: 40px; font-weight: 500;">Failed to load your curation. Please refresh and try again.</div>`;
+        }
+    }
+
+    async function handleWishlistRemove(productId) {
+        if (!profileUser) return;
+        
+        const card = document.getElementById(`wishlist-card-${productId}`);
+        if (card) {
+            card.classList.add('pop-out');
+            setTimeout(() => {
+                card.remove();
+                const grid = document.getElementById('wishlistGrid');
+                if (grid.children.length === 0) {
+                    grid.style.display = 'none';
+                    document.getElementById('wishlistEmpty').style.display = 'block';
+                }
+            }, 400);
+        }
+        
+        await WishlistManager.toggle(productId);
+    }
+
+    // Quick View Modal Functions (synchronized with shop.ejs)
+    let qvProductsCache = {};
+    async function openQuickView(productId) {
+        const overlay = document.getElementById('quickviewOverlay');
+        overlay.classList.add('active');
+        document.body.classList.add('modal-open');
+
+        const targets = ['#qvImage', '#qvCategory', '#qvName', '#qvPrice', '#qvDesc', '#qvStock', '#qvAddToCart', '#qvViewFull'];
+        const isLoaded = !!qvProductsCache[productId];
+
+        if (!isLoaded && typeof SkelKit !== 'undefined') {
+            targets.forEach(t => SkelKit.auto(t));
+        }
+
+        try {
+            if (!isLoaded) {
+                const res = await fetch(`/api/products/${productId}`);
+                const data = await res.json();
+                if (data.success) qvProductsCache[productId] = data.product;
+            }
+            const p = qvProductsCache[productId];
+            if (!p) return;
+            document.getElementById('qvImage').src = (p.images && p.images[0]) || '';
+            document.getElementById('qvCategory').textContent = p.category || 'General';
+            document.getElementById('qvName').textContent = p.name;
+            document.getElementById('qvPrice').textContent = '₹' + Number(p.salePrice).toLocaleString('en-IN');
+            const orig = document.getElementById('qvOriginal');
+            const disc = document.getElementById('qvDiscount');
+            if (p.originalPrice > p.salePrice) {
+                orig.textContent = '₹' + Number(p.originalPrice).toLocaleString('en-IN'); orig.style.display = '';
+                disc.textContent = '-' + Math.round(((p.originalPrice - p.salePrice) / p.originalPrice) * 100) + '% OFF'; disc.style.display = '';
+            } else { orig.style.display = 'none'; disc.style.display = 'none'; }
+            document.getElementById('qvDesc').textContent = p.description || '';
+            const stockEl = document.getElementById('qvStock');
+            stockEl.className = p.stock > 0 ? 'quickview-stock in-stock' : 'quickview-stock out-stock';
+            stockEl.innerHTML = p.stock > 0 ? '<i class="fas fa-check-circle"></i> In Stock (' + p.stock + ')' : '<i class="fas fa-times-circle"></i> Out of Stock';
+            document.getElementById('qvAddToCart').onclick = () => { addToCart(p.id, p.name, p.salePrice, p.originalPrice, (p.images && p.images[0]) || ''); closeQuickView(); };
+            document.getElementById('qvViewFull').href = '/product/' + p.id;
+        } catch (e) { 
+            console.error('Quick view error:', e); 
+        } finally {
+            if (typeof SkelKit !== 'undefined') {
+                targets.forEach(t => SkelKit.reveal(t));
+            }
+        }
+    }
+    function closeQuickView() { document.getElementById('quickviewOverlay').classList.remove('active'); document.body.classList.remove('modal-open'); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeQuickView(); });
+</script>
+
+<%- include('partials/footer') %>

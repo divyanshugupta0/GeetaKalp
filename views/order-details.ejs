@@ -10,8 +10,44 @@
 <section style="padding: 60px 20px; background: var(--bg-body); min-height: 50vh;">
     <div class="container" style="max-width: 800px;">
         
-        <div id="loading" style="text-align: center; padding: 40px;">
-            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--text-muted);"></i>
+        <div id="loading">
+            <!-- SkelKit Loading Skeletons for Order Details -->
+            <div class="order-details-skeleton" style="pointer-events: none; border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-card); margin-bottom: 24px;">
+                <div style="background: var(--bg-elevated); padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 80px; height: 10px; border-radius: 4px; margin-bottom: 6px;"></div>
+                        <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 120px; height: 14px; border-radius: 4px;"></div>
+                    </div>
+                    <div>
+                        <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 50px; height: 10px; border-radius: 4px; margin-bottom: 6px;"></div>
+                        <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 80px; height: 26px; border-radius: 50px;"></div>
+                    </div>
+                </div>
+                <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+                    <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 60px; height: 16px; border-radius: 4px; margin-bottom: 8px;"></div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 50px; height: 50px; border-radius: var(--radius-sm);"></div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 180px; height: 16px; border-radius: 4px;"></div>
+                                <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 100px; height: 12px; border-radius: 4px;"></div>
+                            </div>
+                        </div>
+                        <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 80px; height: 18px; border-radius: 4px;"></div>
+                    </div>
+                </div>
+                <div style="padding: 24px; border-top: 1px solid var(--border); background: var(--bg-elevated); display: flex; flex-direction: column; gap: 12px;">
+                    <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 120px; height: 16px; border-radius: 4px; margin-bottom: 4px;"></div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 100px; height: 12px; border-radius: 4px;"></div>
+                        <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 120px; height: 12px; border-radius: 4px;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 80px; height: 12px; border-radius: 4px;"></div>
+                        <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 70px; height: 12px; border-radius: 4px;"></div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="orderDetails" style="display: none;">
@@ -170,6 +206,9 @@
     });
 
     async function loadOrderDetails() {
+        if (typeof SkelKit !== 'undefined') {
+            SkelKit.refresh();
+        }
         try {
             const snap = await firebase.database().ref(`orders/${orderId}`).once('value');
             const order = snap.val();

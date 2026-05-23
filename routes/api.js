@@ -23,60 +23,7 @@ try {
     console.warn('⚠️  Razorpay not configured. Payment features disabled.');
 }
 
-// ─── Helper: Send Order Notifications ───
-async function sendOrderNotifications(orderId, amount, customerInfo, paymentMethod, items) {
-    try {
-        const adminEmail = process.env.WEB3FORMS_ACCESS_KEY ? 'admin@geetakalp.com' : null;
-        
-        // 1. Notify Admin via Web3Forms
-        if (process.env.WEB3FORMS_ACCESS_KEY) {
-            const itemsList = items.map(i => `${i.name} (x${i.quantity})`).join(', ');
-            await fetch('https://api.web3forms.com/submit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    access_key: process.env.WEB3FORMS_ACCESS_KEY,
-                    subject: `New Order Received - ${orderId}`,
-                    from_name: 'Geeta Kalp System',
-                    to: adminEmail,
-                    message: `A new order has been placed!\n\nOrder ID: ${orderId}\nAmount: ₹${amount}\nCustomer: ${customerInfo.name} (${customerInfo.email})\nPhone: ${customerInfo.phone}\nPayment Method: ${paymentMethod.toUpperCase()}\n\nItems: ${itemsList}\nAddress: ${customerInfo.address}, ${customerInfo.city}, ${customerInfo.state} - ${customerInfo.pincode}`
-                })
-            });
-        }
 
-        // 2. Notify Customer via Brevo API
-        if (process.env.BREVO_API_KEY && customerInfo.email) {
-            await fetch('https://api.brevo.com/v3/smtp/email', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'api-key': process.env.BREVO_API_KEY
-                },
-                body: JSON.stringify({
-                    sender: { name: 'Geeta Kalp', email: 'no-reply@geetakalp.com' },
-                    to: [{ email: customerInfo.email, name: customerInfo.name }],
-                    subject: 'Order Confirmation - Geeta Kalp',
-                    htmlContent: `
-                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-                            <h1 style="color: #6366f1;">Thank you for your order!</h1>
-                            <p>Hi <strong>${customerInfo.name}</strong>,</p>
-                            <p>We have successfully received your order and are getting it ready for shipment.</p>
-                            <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                                <p style="margin: 5px 0;"><strong>Order ID:</strong> ${orderId}</p>
-                                <p style="margin: 5px 0;"><strong>Total Amount:</strong> ₹${amount.toLocaleString('en-IN')}</p>
-                                <p style="margin: 5px 0;"><strong>Payment Method:</strong> ${paymentMethod.toUpperCase()}</p>
-                            </div>
-                            <p>We will notify you once your order ships.</p>
-                            <p>Best Regards,<br>Geeta Kalp Team</p>
-                        </div>
-                    `
-                })
-            });
-        }
-    } catch (error) {
-        console.error('Notification Error:', error);
-    }
-}
 
 function escapeHtml(value) {
     return String(value ?? '')
@@ -95,49 +42,55 @@ function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
 }
 
-async function sendBrevoEmail({ to, subject, htmlContent, textContent }) {
-    if (!process.env.BREVO_API_KEY) {
-        return { success: false, skipped: true, reason: 'BREVO_API_KEY is not configured' };
+async function sendMailjetEmail({ to, subject, htmlContent, textContent }) {
+    if (!process.env.MAILJET_API_KEY || !process.env.MAILJET_SECRET_KEY) {
+        return { success: false, skipped: true, reason: 'MAILJET_API_KEY or MAILJET_SECRET_KEY is not configured' };
     }
 
-    const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.MAIL_FROM || 'no-reply@geetakalp.com';
-    const senderName = process.env.BREVO_SENDER_NAME || 'Geeta Kalp';
+    const senderEmail = process.env.MAILJET_FROM_EMAIL || 'no-reply@geetakalp.com';
+    const senderName = 'Geeta Kalp';
     const recipients = (Array.isArray(to) ? to : [to])
         .filter(recipient => recipient && isValidEmail(recipient.email))
         .map(recipient => ({
-            email: recipient.email.trim(),
-            name: recipient.name || recipient.email.trim()
+            Email: recipient.email.trim(),
+            Name: recipient.name || recipient.email.trim()
         }));
 
     if (!recipients.length) {
         return { success: false, skipped: true, reason: 'No valid email recipients' };
     }
 
+    // Create Basic Auth header
+    const auth = Buffer.from(`${process.env.MAILJET_API_KEY}:${process.env.MAILJET_SECRET_KEY}`).toString('base64');
+
     let response;
     try {
-        response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        response = await fetch('https://api.mailjet.com/v3.1/send', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'api-key': process.env.BREVO_API_KEY
+                'Authorization': `Basic ${auth}`
             },
             body: JSON.stringify({
-                sender: { name: senderName, email: senderEmail },
-                to: recipients,
-                subject,
-                htmlContent,
-                textContent
+                Messages: [
+                    {
+                        From: { Email: senderEmail, Name: senderName },
+                        To: recipients,
+                        Subject: subject,
+                        HTMLPart: htmlContent,
+                        TextPart: textContent
+                    }
+                ]
             })
         });
     } catch (error) {
-        console.error('Brevo email request failed:', error.message);
+        console.error('Mailjet email request failed:', error.message);
         return { success: false, error: error.message };
     }
 
     if (!response.ok) {
         const errorText = await response.text().catch(() => '');
-        console.error('Brevo email failed:', response.status, errorText);
+        console.error('Mailjet email failed:', response.status, errorText);
         return { success: false, status: response.status, error: errorText };
     }
 
@@ -160,17 +113,85 @@ function buildOrderItemsHtml(items) {
     }).join('');
 }
 
+function buildCustomerOrderEmail(orderId, amount, customerName, paymentLabel, items) {
+    const productRows = (items || []).map(item => {
+        const quantity = Number(item.quantity || 1);
+        const price = Number(item.price || item.salePrice || 0);
+        const lineTotal = price * quantity;
+        const imageUrl = item.image ? (item.image.startsWith('http') ? item.image : `https://${item.image}`) : '';
+
+        return `
+            <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 12px; display: flex; gap: 16px;">
+                ${imageUrl ? `<div style="flex-shrink: 0;"><img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(item.name)}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;"></div>` : ''}
+                <div style="flex-grow: 1;">
+                    <h4 style="margin: 0 0 8px 0; color: #1f2937;">${escapeHtml(item.name || 'Item')}</h4>
+                    <p style="margin: 4px 0; color: #6b7280; font-size: 14px;"><strong>Quantity:</strong> ${quantity}</p>
+                    <p style="margin: 4px 0; color: #6b7280; font-size: 14px;"><strong>Price:</strong> ${formatINR(price)} each</p>
+                    <p style="margin: 4px 0; color: #1f2937; font-weight: bold; font-size: 14px;"><strong>Subtotal:</strong> ${formatINR(lineTotal)}</p>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #333;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 8px 8px 0 0; color: white; text-align: center;">
+                <h1 style="margin: 0; font-size: 24px;">✓ Order Confirmed!</h1>
+                <p style="margin: 8px 0 0 0; opacity: 0.9;">Thank you for your purchase</p>
+            </div>
+            
+            <div style="background: #f9fafb; padding: 20px; border-radius: 0 0 8px 8px;">
+                <p style="margin-top: 0;">Hi <strong>${escapeHtml(customerName)}</strong>,</p>
+                <p>We have successfully received your order and are getting it ready for shipment. Below are your order details:</p>
+                
+                <div style="background: white; border: 2px solid #667eea; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div>
+                            <p style="margin: 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Order ID</p>
+                            <p style="margin: 4px 0 0 0; font-size: 16px; font-weight: bold; color: #1f2937;">${escapeHtml(orderId)}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Total Amount</p>
+                            <p style="margin: 4px 0 0 0; font-size: 18px; font-weight: bold; color: #667eea;">${formatINR(amount)}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Payment Method</p>
+                            <p style="margin: 4px 0 0 0; font-size: 14px; color: #1f2937;">${escapeHtml(paymentLabel)}</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Status</p>
+                            <p style="margin: 4px 0 0 0; font-size: 14px; color: #10b981; font-weight: bold;">Processing</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 style="color: #1f2937; margin: 24px 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid #667eea;">Order Items</h3>
+                ${productRows}
+                
+                <p style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+                    We will notify you with tracking information once your order ships. If you have any questions, feel free to contact our support team.
+                </p>
+                
+                <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px;">
+                    <p style="margin: 0;">Best Regards,<br><strong>Geeta Kalp Team</strong></p>
+                    <p style="margin: 8px 0 0 0;">For support, visit our website or contact us at support@geetakalp.com</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 async function sendOrderNotifications(orderId, amount, customerInfo, paymentMethod, items) {
     try {
-        const adminEmail = process.env.BREVO_ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'admin@geetakalp.com';
+        const adminEmail = 'admin@geetakalp.com';
         const itemsList = (items || []).map(i => `${i.name} (x${i.quantity})`).join(', ');
         const customerName = customerInfo.name || 'Customer';
         const paymentLabel = String(paymentMethod || 'online').toUpperCase();
         const address = `${customerInfo.address || ''}, ${customerInfo.city || ''}, ${customerInfo.state || ''} - ${customerInfo.pincode || ''}`;
         const itemRows = buildOrderItemsHtml(items);
 
-        if (process.env.BREVO_API_KEY && isValidEmail(adminEmail)) {
-            await sendBrevoEmail({
+        if (process.env.MAILJET_API_KEY && isValidEmail(adminEmail)) {
+            await sendMailjetEmail({
                 to: [{ email: adminEmail, name: 'Geeta Kalp Admin' }],
                 subject: `New Order Received - ${orderId}`,
                 textContent: `New order received.\n\nOrder ID: ${orderId}\nAmount: ${formatINR(amount)}\nCustomer: ${customerName} (${customerInfo.email || 'No email'})\nPhone: ${customerInfo.phone || 'N/A'}\nPayment Method: ${paymentLabel}\nItems: ${itemsList}\nAddress: ${address}`,
@@ -217,35 +238,13 @@ async function sendOrderNotifications(orderId, amount, customerInfo, paymentMeth
             });
         }
 
-        if (process.env.BREVO_API_KEY && isValidEmail(customerInfo.email)) {
-            await sendBrevoEmail({
+        if (process.env.MAILJET_API_KEY && isValidEmail(customerInfo.email)) {
+            const customerEmailHtml = buildCustomerOrderEmail(orderId, amount, customerName, paymentLabel, items);
+            await sendMailjetEmail({
                 to: [{ email: customerInfo.email, name: customerName }],
                 subject: `Order Confirmation - ${orderId}`,
                 textContent: `Hi ${customerName},\n\nThank you for your order.\n\nOrder ID: ${orderId}\nTotal Amount: ${formatINR(amount)}\nPayment Method: ${paymentLabel}\n\nWe will notify you once your order ships.\n\nGeeta Kalp Team`,
-                htmlContent: `
-                    <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #333;">
-                        <h1 style="color: #6366f1;">Thank you for your order!</h1>
-                        <p>Hi <strong>${escapeHtml(customerName)}</strong>,</p>
-                        <p>We have successfully received your order and are getting it ready for shipment.</p>
-                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin: 20px 0;">
-                            <p style="margin: 5px 0;"><strong>Order ID:</strong> ${escapeHtml(orderId)}</p>
-                            <p style="margin: 5px 0;"><strong>Total Amount:</strong> ${formatINR(amount)}</p>
-                            <p style="margin: 5px 0;"><strong>Payment Method:</strong> ${escapeHtml(paymentLabel)}</p>
-                        </div>
-                        <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
-                            <thead>
-                                <tr>
-                                    <th style="text-align: left; padding-bottom: 8px;">Item</th>
-                                    <th style="text-align: center; padding-bottom: 8px;">Qty</th>
-                                    <th style="text-align: right; padding-bottom: 8px;">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>${itemRows}</tbody>
-                        </table>
-                        <p>We will notify you once your order ships.</p>
-                        <p>Best Regards,<br>Geeta Kalp Team</p>
-                    </div>
-                `
+                htmlContent: customerEmailHtml
             });
         }
     } catch (error) {
@@ -326,7 +325,7 @@ function normalizeProductBadge(type, text, isNewFallback = false) {
 
 const verifyAdmin = async (req, res, next) => {
     const token = req.headers.authorization?.split('Bearer ')[1];
-    
+
     if (!token) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -361,36 +360,36 @@ const verifyAdmin = async (req, res, next) => {
 async function generateCheckoutToken() {
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = Date.now() + (5 * 60 * 1000); // 5 minutes from now
-    
+
     await db.ref(`checkoutTokens/${token}`).set({
         createdAt: admin.database.ServerValue.TIMESTAMP,
         expiresAt: expiresAt,
         used: false
     });
-    
+
     return token;
 }
 
 // Validate a checkout token
 async function validateCheckoutToken(token) {
     if (!token) return { valid: false, error: 'Token required' };
-    
+
     try {
         const snapshot = await db.ref(`checkoutTokens/${token}`).once('value');
         const tokenData = snapshot.val();
-        
+
         if (!tokenData) {
             return { valid: false, error: 'Invalid token' };
         }
-        
+
         if (tokenData.used) {
             return { valid: false, error: 'Token already used' };
         }
-        
+
         if (Date.now() > tokenData.expiresAt) {
             return { valid: false, error: 'Token expired' };
         }
-        
+
         return { valid: true };
     } catch (error) {
         console.error('Token validation error:', error);
@@ -577,9 +576,12 @@ router.post('/categories', verifyAdmin, async (req, res) => {
 // ─── Generate Checkout Token ───
 router.post('/generate-checkout-token', async (req, res) => {
     try {
+        // For future use: Add backend authentication check if needed
+        // For now, relying on client-side Firebase auth check
+
         const token = await generateCheckoutToken();
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             token: token,
             expiresIn: '5 minutes',
             message: 'Checkout token generated successfully'
@@ -595,16 +597,16 @@ router.post('/validate-checkout-token', async (req, res) => {
     try {
         const { token } = req.body;
         const validation = await validateCheckoutToken(token);
-        
+
         if (!validation.valid) {
-            return res.status(400).json({ 
-                success: false, 
-                error: validation.error 
+            return res.status(400).json({
+                success: false,
+                error: validation.error
             });
         }
-        
-        res.json({ 
-            success: true, 
+
+        res.json({
+            success: true,
             message: 'Token is valid',
             valid: true
         });
@@ -648,7 +650,7 @@ router.post('/create-order', async (req, res) => {
 
         const isCOD = paymentMethod === 'cod';
         const payNow = amountToPayNow !== undefined ? amountToPayNow : amount;
-        
+
         // If 100% COD (nothing to pay online), skip Razorpay
         if (payNow === 0 && isCOD) {
             const orderData = {
@@ -664,10 +666,10 @@ router.post('/create-order', async (req, res) => {
                 createdAt: admin.database.ServerValue.TIMESTAMP
             };
             const orderRef = await db.ref('orders').push(orderData);
-            
+
             // Consume the checkout token
             await consumeCheckoutToken(checkoutToken);
-            
+
             // Burn the coupon immediately since there is no verify-payment step
             if (coupon && coupon.code && customerInfo.email) {
                 const couponSnap = await db.ref('coupons').orderByChild('code').equalTo(coupon.code).once('value');
@@ -683,7 +685,7 @@ router.post('/create-order', async (req, res) => {
 
             // Send Email Notifications
             await sendOrderNotifications(orderRef.key, amount, customerInfo, 'cod', items);
-            
+
             return res.json({
                 success: true,
                 orderId: orderRef.key,
@@ -814,7 +816,7 @@ router.get('/orders', verifyAdmin, async (req, res) => {
 router.patch('/orders/:id/status', verifyAdmin, async (req, res) => {
     try {
         const { status } = req.body;
-        
+
         const updates = {
             status,
             updatedAt: admin.database.ServerValue.TIMESTAMP
@@ -922,17 +924,17 @@ router.get('/users', verifyAdmin, async (req, res) => {
     try {
         const snapshot = await db.ref('orders').once('value');
         const orders = snapshot.val();
-        
+
         if (!orders) {
             return res.json({ success: true, users: [] });
         }
 
         const usersMap = {};
-        
+
         Object.keys(orders).forEach(orderId => {
             const order = orders[orderId];
             if (!order.customerInfo || !order.customerInfo.email) return;
-            
+
             const email = order.customerInfo.email;
             if (!usersMap[email]) {
                 usersMap[email] = {
@@ -950,10 +952,10 @@ router.get('/users', verifyAdmin, async (req, res) => {
                     lastOrderDate: order.createdAt
                 };
             }
-            
+
             usersMap[email].totalOrders += 1;
             usersMap[email].totalSpent += (order.amount || 0);
-            
+
             if (order.createdAt < usersMap[email].firstOrderDate) {
                 usersMap[email].firstOrderDate = order.createdAt;
             }
@@ -1040,7 +1042,7 @@ router.post('/reviews', async (req, res) => {
     try {
         const { productId, rating, comment, customerName, customerEmail } = req.body;
         if (!productId || !rating) return res.status(400).json({ success: false, error: 'Product ID and Rating required' });
-        
+
         await db.ref('reviews').push({
             productId,
             rating: Number(rating),
@@ -1050,7 +1052,7 @@ router.post('/reviews', async (req, res) => {
             approved: false, // Must be approved by admin
             createdAt: admin.database.ServerValue.TIMESTAMP
         });
-        
+
         res.json({ success: true, message: 'Review submitted for approval' });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -1061,7 +1063,7 @@ router.get('/reviews/admin', verifyAdmin, async (req, res) => {
     try {
         const snapshot = await db.ref('reviews').once('value');
         const data = snapshot.val() || {};
-        const reviews = Object.keys(data).map(id => ({ id, ...data[id] })).sort((a,b) => b.createdAt - a.createdAt);
+        const reviews = Object.keys(data).map(id => ({ id, ...data[id] })).sort((a, b) => b.createdAt - a.createdAt);
         res.json({ success: true, reviews });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -1136,7 +1138,7 @@ router.get('/debug/test-endpoint', verifyAdmin, async (req, res) => {
 
         // Validate endpoint format
         const isValidFormat = /^https:\/\/[a-zA-Z0-9]+\.r2\.cloudflarestorage\.com\/?$/.test(endpoint);
-        
+
         if (!isValidFormat) {
             return res.status(400).json({
                 success: false,
@@ -1180,12 +1182,12 @@ router.get('/debug/test-endpoint', verifyAdmin, async (req, res) => {
 router.get('/debug/verify-credentials', verifyAdmin, async (req, res) => {
     try {
         console.log('\n🔍 Verifying R2 credentials...\n');
-        
+
         const credentials = await fetchCredentialsFromFirebase(db);
-        
+
         // Check for common issues
         const issues = [];
-        
+
         if (credentials.accessKeyId.includes(' ')) {
             issues.push('Access Key ID has spaces');
         }
@@ -1195,7 +1197,7 @@ router.get('/debug/verify-credentials', verifyAdmin, async (req, res) => {
         if (!credentials.accessKeyId.match(/^[a-z0-9]+$/i)) {
             issues.push('Access Key ID contains invalid characters');
         }
-        
+
         res.json({
             success: true,
             credentials: {
@@ -1276,14 +1278,14 @@ router.post('/upload', verifyAdmin, upload.single('image'), async (req, res) => 
 
         if (!uploadResult.success) {
             console.error('R2 Upload failed:', uploadResult.error);
-            return res.status(500).json({ 
-                success: false, 
-                error: `Upload failed: ${uploadResult.error}` 
+            return res.status(500).json({
+                success: false,
+                error: `Upload failed: ${uploadResult.error}`
             });
         }
 
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             url: uploadResult.url,
             key: uploadResult.key,
             message: 'Image uploaded successfully'
@@ -1298,7 +1300,7 @@ router.post('/upload', verifyAdmin, upload.single('image'), async (req, res) => 
 router.get('/fetch-image/:key(*)', async (req, res) => {
     try {
         const key = req.params.key;
-        
+
         if (!key) {
             return res.status(400).json({ success: false, error: 'Image key is required' });
         }
@@ -1307,9 +1309,9 @@ router.get('/fetch-image/:key(*)', async (req, res) => {
 
         if (!fetchResult.success) {
             console.error('R2 Fetch failed:', fetchResult.error);
-            return res.status(404).json({ 
-                success: false, 
-                error: `Image not found: ${fetchResult.error}` 
+            return res.status(404).json({
+                success: false,
+                error: `Image not found: ${fetchResult.error}`
             });
         }
 
@@ -1332,7 +1334,7 @@ router.get('/fetch-image/:key(*)', async (req, res) => {
 router.delete('/delete-image/:key(*)', verifyAdmin, async (req, res) => {
     try {
         const key = req.params.key;
-        
+
         if (!key) {
             return res.status(400).json({ success: false, error: 'Image key is required' });
         }
@@ -1341,14 +1343,14 @@ router.delete('/delete-image/:key(*)', verifyAdmin, async (req, res) => {
 
         if (!deleteResult.success) {
             console.error('R2 Delete failed:', deleteResult.error);
-            return res.status(500).json({ 
-                success: false, 
-                error: `Delete failed: ${deleteResult.error}` 
+            return res.status(500).json({
+                success: false,
+                error: `Delete failed: ${deleteResult.error}`
             });
         }
 
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             message: 'Image deleted successfully'
         });
     } catch (error) {
@@ -1363,7 +1365,7 @@ router.get('/public-coupons', async (req, res) => {
         const snapshot = await db.ref('coupons').once('value');
         const data = snapshot.val() || {};
         const publicCoupons = [];
-        
+
         for (const key in data) {
             const c = data[key];
             if (c.active !== false && c.type !== 'private') {
@@ -1388,10 +1390,10 @@ router.get('/coupons', verifyAdmin, async (req, res) => {
         const couponsData = snapshot.val() || {};
         const coupons = [];
         const now = Date.now();
-        
+
         for (const id in couponsData) {
             const c = couponsData[id];
-            
+
             // Auto-deactivate if expired
             if (c.active && c.validTill && new Date(c.validTill).getTime() < now) {
                 c.active = false;
@@ -1402,7 +1404,7 @@ router.get('/coupons', verifyAdmin, async (req, res) => {
                 c.active = false;
                 db.ref(`coupons/${id}`).update({ active: false }).catch(err => console.error("Auto-expire global_single failed:", err));
             }
-            
+
             coupons.push({ id, ...c });
         }
         res.json({ success: true, coupons });
@@ -1415,16 +1417,16 @@ router.post('/coupons', verifyAdmin, async (req, res) => {
     try {
         const { code, discountPercent, minOrderAmount, active, type, usageType, validTill } = req.body;
         if (!code || !discountPercent) return res.status(400).json({ success: false, error: 'Code and discount required' });
-        
+
         // Ensure code doesn't exist
         const existSnap = await db.ref('coupons').orderByChild('code').equalTo(code.toUpperCase()).once('value');
         if (existSnap.exists()) {
             return res.status(400).json({ success: false, error: 'Coupon code already exists' });
         }
 
-        const ref = await db.ref('coupons').push({ 
-            code: code.toUpperCase(), 
-            discountPercent: Number(discountPercent), 
+        const ref = await db.ref('coupons').push({
+            code: code.toUpperCase(),
+            discountPercent: Number(discountPercent),
             minOrderAmount: Math.max(0, Number(minOrderAmount || 0)) || null,
             active: active !== false,
             type: type || 'public',
@@ -1442,7 +1444,7 @@ router.post('/coupons', verifyAdmin, async (req, res) => {
 router.put('/coupons/:id', verifyAdmin, async (req, res) => {
     try {
         const { discountPercent, minOrderAmount, active, type, usageType, validTill } = req.body;
-        
+
         const updates = {
             discountPercent: Number(discountPercent),
             minOrderAmount: Math.max(0, Number(minOrderAmount || 0)) || null,
@@ -1451,7 +1453,7 @@ router.put('/coupons/:id', verifyAdmin, async (req, res) => {
             usageType: usageType || 'unlimited',
             validTill: validTill || null
         };
-        
+
         await db.ref(`coupons/${req.params.id}`).update(updates);
         res.json({ success: true });
     } catch (error) {
@@ -1477,4 +1479,134 @@ router.delete('/coupons/:id', verifyAdmin, async (req, res) => {
     }
 });
 
+// ══════════════════════════════════════════
+//  WISHLIST APIS
+// ══════════════════════════════════════════
+
+// ─── Get Wishlist ───
+router.get('/wishlist/:uid', async (req, res) => {
+    try {
+        const snapshot = await db.ref(`customers/${req.params.uid}/wishlist`).once('value');
+        const wishlist = snapshot.val() || {};
+        const productIds = Object.keys(wishlist);
+        res.json({ success: true, productIds });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ─── Get Wishlist Details ───
+router.get('/wishlist-details/:uid', async (req, res) => {
+    try {
+        const snapshot = await db.ref(`customers/${req.params.uid}/wishlist`).once('value');
+        const wishlist = snapshot.val() || {};
+        const productIds = Object.keys(wishlist);
+
+        if (productIds.length === 0) {
+            return res.json({ success: true, products: [] });
+        }
+
+        const productPromises = productIds.map(async (id) => {
+            const productSnap = await db.ref(`products/${id}`).once('value');
+            if (productSnap.exists()) {
+                const prod = productSnap.val();
+                if (prod.active !== false) {
+                    return normalizeProductImages({ id, ...prod });
+                }
+            }
+            return null;
+        });
+
+        const products = (await Promise.all(productPromises)).filter(p => p !== null);
+        res.json({ success: true, products });
+    } catch (error) {
+        console.error('Error fetching wishlist details:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ─── Add to Wishlist ───
+router.post('/wishlist', async (req, res) => {
+    try {
+        const { uid, productId } = req.body;
+        if (!uid || !productId) {
+            return res.status(400).json({ success: false, error: 'UID and Product ID required' });
+        }
+        await db.ref(`customers/${uid}/wishlist/${productId}`).set(admin.database.ServerValue.TIMESTAMP);
+        res.json({ success: true, message: 'Added to wishlist' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ─── Remove from Wishlist ───
+router.delete('/wishlist/:uid/:productId', async (req, res) => {
+    try {
+        await db.ref(`customers/${req.params.uid}/wishlist/${req.params.productId}`).remove();
+        res.json({ success: true, message: 'Removed from wishlist' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ══════════════════════════════════════════
+//  NEWSLETTER APIS
+// ══════════════════════════════════════════
+
+// ─── Subscribe to Newsletter ───
+router.post('/newsletter/subscribe', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email || !isValidEmail(email)) {
+            return res.status(400).json({ success: false, error: 'Valid email required' });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+        const safeEmail = normalizedEmail.replace(/\./g, ',');
+
+        // Check for existing subscription
+        const existSnap = await db.ref(`newsletter_subscribers/${safeEmail}`).once('value');
+        if (existSnap.exists()) {
+            return res.status(400).json({ success: false, error: 'Already subscribed!' });
+        }
+
+        await db.ref(`newsletter_subscribers/${safeEmail}`).set({
+            email: normalizedEmail,
+            subscribedAt: admin.database.ServerValue.TIMESTAMP
+        });
+
+        res.json({ success: true, message: 'Successfully subscribed!' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ─── Get Newsletter Subscribers (Admin) ───
+router.get('/newsletter/subscribers', verifyAdmin, async (req, res) => {
+    try {
+        const snapshot = await db.ref('newsletter_subscribers').once('value');
+        const data = snapshot.val() || {};
+        const subscribers = Object.keys(data).map(key => ({
+            id: key,
+            ...data[key]
+        }));
+        subscribers.sort((a, b) => (b.subscribedAt || 0) - (a.subscribedAt || 0));
+        res.json({ success: true, subscribers });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ─── Delete Newsletter Subscriber (Admin) ───
+router.delete('/newsletter/subscribers/:id', verifyAdmin, async (req, res) => {
+    try {
+        await db.ref(`newsletter_subscribers/${req.params.id}`).remove();
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+
 module.exports = router;
+

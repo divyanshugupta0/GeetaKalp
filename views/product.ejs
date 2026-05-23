@@ -16,7 +16,7 @@
         <div class="product-detail-grid">
             <!-- Product Images -->
             <div class="product-gallery">
-                <div class="main-image-wrap">
+                <div class="main-image-wrap zoom-container" id="zoomContainer">
                     <% if (product.images && product.images.length > 0) { %>
                     <img src="<%= product.images[0] %>" alt="<%= product.name %>" class="main-image" id="mainImage">
                     <% } else { %>
@@ -102,6 +102,9 @@
                         <%= product.stock === 0 ? 'disabled' : '' %>>
                         <i class="fas fa-shopping-bag"></i>
                         <span>Add to Cart</span>
+                    </button>
+                    <button class="product-wishlist-detail" data-wishlist-id="<%= product.id %>" onclick="WishlistManager.toggle('<%= product.id %>')">
+                        <i class="far fa-heart"></i> <span>Wishlist</span>
                     </button>
                 </div>
 
@@ -194,6 +197,15 @@
             </div>
         </div>
         <% } %>
+
+        <!-- Recently Viewed Products -->
+        <div class="recently-viewed-section" id="recentlyViewedSection" style="display: none;">
+            <div class="rv-header">
+                <h2 class="section-title" style="font-size: 1.6rem;">Recently Viewed</h2>
+                <button class="rv-clear" onclick="clearRecentlyViewed()"><i class="fas fa-trash-alt"></i> Clear</button>
+            </div>
+            <div class="recently-viewed-scroll" id="recentlyViewedScroll"></div>
+        </div>
     </div>
 </section>
 
@@ -256,6 +268,73 @@
             }
         }
     }
+</script>
+
+<script>
+    // ── Image Zoom ──
+    const zoomContainer = document.getElementById('zoomContainer');
+    const mainImageEl = document.getElementById('mainImage');
+    if (zoomContainer && mainImageEl) {
+        let isZoomed = false;
+        zoomContainer.addEventListener('mousemove', (e) => {
+            if (window.innerWidth < 768) return;
+            const rect = zoomContainer.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+            mainImageEl.style.transformOrigin = `${x}% ${y}%`;
+            if (isZoomed) mainImageEl.style.transform = 'scale(2)';
+        });
+        zoomContainer.addEventListener('click', () => {
+            if (window.innerWidth < 768) return;
+            isZoomed = !isZoomed;
+            zoomContainer.classList.toggle('zoomed', isZoomed);
+            mainImageEl.style.transform = isZoomed ? 'scale(2)' : 'scale(1)';
+        });
+        zoomContainer.addEventListener('mouseleave', () => {
+            isZoomed = false;
+            zoomContainer.classList.remove('zoomed');
+            mainImageEl.style.transform = 'scale(1)';
+        });
+    }
+
+    // ── Recently Viewed ──
+    const currentProduct = {
+        id: <%- JSON.stringify(product.id) %>,
+        name: <%- JSON.stringify(product.name) %>,
+        salePrice: <%= product.salePrice %>,
+        image: <%- JSON.stringify(product.images && product.images[0] ? product.images[0] : '') %>
+    };
+    function getRecentlyViewed() {
+        try { return JSON.parse(localStorage.getItem('recentlyViewed') || '[]'); } catch { return []; }
+    }
+    function saveRecentlyViewed(items) {
+        localStorage.setItem('recentlyViewed', JSON.stringify(items));
+    }
+    let rv = getRecentlyViewed().filter(p => p.id !== currentProduct.id);
+    rv.unshift(currentProduct);
+    if (rv.length > 10) rv = rv.slice(0, 10);
+    saveRecentlyViewed(rv);
+
+    function renderRecentlyViewed() {
+        const items = getRecentlyViewed().filter(p => p.id !== currentProduct.id);
+        const section = document.getElementById('recentlyViewedSection');
+        const scroll = document.getElementById('recentlyViewedScroll');
+        if (!items.length || !section || !scroll) return;
+        section.style.display = 'block';
+        scroll.innerHTML = items.map(p => `
+            <a href="/product/${p.id}" class="recently-viewed-item">
+                ${p.image ? `<img src="${p.image}" alt="${p.name}" class="recently-viewed-img">` : '<div class="recently-viewed-img" style="display:flex;align-items:center;justify-content:center;"><i class="fas fa-image" style="color:var(--text-dim);"></i></div>'}
+                <div class="recently-viewed-name">${p.name}</div>
+                <div class="recently-viewed-price">₹${Number(p.salePrice).toLocaleString('en-IN')}</div>
+            </a>
+        `).join('');
+    }
+    function clearRecentlyViewed() {
+        localStorage.removeItem('recentlyViewed');
+        document.getElementById('recentlyViewedSection').style.display = 'none';
+        if (typeof showToast === 'function') showToast('History cleared');
+    }
+    renderRecentlyViewed();
 </script>
 
 <%- include('partials/footer') %>

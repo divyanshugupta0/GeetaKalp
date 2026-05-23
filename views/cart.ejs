@@ -194,7 +194,28 @@
         
         // Fetch public coupons
         const listEl = document.getElementById('publicCouponsList');
-        listEl.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i></div>';
+        listEl.innerHTML = `
+            <div class="coupon-skeleton-container" style="display: flex; flex-direction: column; gap: 12px; pointer-events: none;">
+                <div class="coupon-list-item" style="border: 1px solid var(--border); padding: 12px; border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card);">
+                    <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
+                        <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 80px; height: 16px; border-radius: 4px;"></div>
+                        <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 160px; height: 12px; border-radius: 4px;"></div>
+                    </div>
+                    <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 70px; height: 32px; border-radius: var(--radius-full);"></div>
+                </div>
+                <div class="coupon-list-item" style="border: 1px solid var(--border); padding: 12px; border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card);">
+                    <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
+                        <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 90px; height: 16px; border-radius: 4px;"></div>
+                        <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 140px; height: 12px; border-radius: 4px;"></div>
+                    </div>
+                    <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 70px; height: 32px; border-radius: var(--radius-full);"></div>
+                </div>
+            </div>
+        `;
+        
+        if (typeof SkelKit !== 'undefined') {
+            SkelKit.refresh();
+        }
         
         try {
             const res = await fetch('/api/public-coupons');

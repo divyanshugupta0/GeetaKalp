@@ -81,4 +81,12 @@ router.get('/review-history', (req, res) => {
     res.render('admin/review-history', { title: 'Review History | Admin' });
 });
 
+// ─── Subscribers ───
+router.get('/subscribers', (req, res) => {
+    res.render('admin/subscribers', {
+        title: 'Newsletter Subscribers | Geeta Kalp',
+        metaDescription: 'Manage newsletter subscribers.'
+    });
+});
+
 module.exports = router;

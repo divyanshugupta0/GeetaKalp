@@ -1,0 +1,241 @@
+<%- include('partials/header') %>
+
+<section class="page-hero page-hero-sm">
+    <div class="container">
+        <h1 class="page-title">Our Story</h1>
+        <p class="page-subtitle">Ethically sourced, organically crafted wellness collections for holistic healing</p>
+    </div>
+</section>
+
+<section class="section about-section">
+    <div class="container">
+        <div class="about-grid">
+            <div class="about-content animate-in">
+                <span class="about-badge">Ethereal Botanical Wisdom</span>
+                <h2 class="about-title">Natural Wellness, Rooted in Tradition</h2>
+                <p class="about-text">At <strong>Geeta Kalp</strong>, we believe that true healing begins when we reconnect with nature. Our sanctuary was born out of a profound passion to bring premium botanical wellness products ethically sourced from deep forests and clean farms into modern everyday lives.</p>
+                <p class="about-text">Every oil, blend, and soap we create is formulated using timetested Ayurvedic traditions paired with modern scientific purity standards. We take extreme pride in ensuring zero artificial additives, chemical preservatives, or synthetic fragrances touch our products.</p>
+                
+                <div class="about-highlights">
+                    <div class="highlight-item">
+                        <i class="fas fa-seedling"></i>
+                        <span>100% Organic & Raw</span>
+                    </div>
+                    <div class="highlight-item">
+                        <i class="fas fa-hand-holding-heart"></i>
+                        <span>Ethically Sourced</span>
+                    </div>
+                    <div class="highlight-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Lab Certified Pure</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="about-media animate-in">
+                <div class="about-card story-card">
+                    <div class="story-circle">
+                        <span class="story-icon">✦</span>
+                    </div>
+                    <h3>Our Promise</h3>
+                    <p>"We pledge to nurture your body and soul with the purest elements that nature offers, keeping our environment healthy, clean, and respected at every step of our journey."</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section-alt philosophy-section">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-badge">Core Pillars</span>
+            <h2 class="section-title">Our Sacred Philosophy</h2>
+            <p class="section-subtitle">Guiding every single product and service we render</p>
+        </div>
+        
+        <div class="philosophy-grid">
+            <div class="philosophy-card">
+                <div class="p-icon"><i class="fas fa-heart"></i></div>
+                <h3>Mindful Curation</h3>
+                <p>We selectively harvest plants only at the peak of their energetic potency, ensuring maximum healing benefits are preserved inside every pack.</p>
+            </div>
+            
+            <div class="philosophy-card">
+                <div class="p-icon"><i class="fas fa-leaf"></i></div>
+                <h3>Sustainable Sourcing</h3>
+                <p>We work hand-in-hand with small, local Indian farmers, practicing fair trade and sustainable agriculture to keep soil fertile and ecosystem balanced.</p>
+            </div>
+            
+            <div class="philosophy-card">
+                <div class="p-icon"><i class="fas fa-flask"></i></div>
+                <h3>Empirical Purity</h3>
+                <p>Our products undergo multiple rigorous testing cycles to verify raw constituents, heavy metal safety, and clinical grade botanical strength.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .about-section {
+        padding-top: 60px;
+        padding-bottom: 100px;
+    }
+    .about-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 64px;
+        align-items: center;
+    }
+    .about-badge {
+        display: inline-block;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--primary);
+        font-weight: 600;
+        letter-spacing: 0.15em;
+        margin-bottom: 16px;
+    }
+    .about-title {
+        font-family: var(--font-display);
+        font-size: 2.8rem;
+        font-weight: 400;
+        line-height: 1.2;
+        margin-bottom: 24px;
+        color: var(--text);
+    }
+    .about-text {
+        color: var(--text-muted);
+        line-height: 1.8;
+        font-weight: 300;
+        margin-bottom: 20px;
+        font-size: 1.05rem;
+    }
+    .about-highlights {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 36px;
+    }
+    .highlight-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 10px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        padding: 20px 12px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+    }
+    .highlight-item i {
+        color: var(--primary);
+        font-size: 1.5rem;
+    }
+    .highlight-item span {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--text);
+    }
+    
+    /* Promise Card */
+    .about-card.story-card {
+        background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 48px;
+        text-align: center;
+        box-shadow: var(--shadow-lg);
+        position: relative;
+    }
+    .story-circle {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        box-shadow: 0 10px 24px rgba(0, 107, 29, 0.2);
+    }
+    .story-icon {
+        color: #ffffff;
+        font-family: var(--font-display);
+        font-size: 1.8rem;
+        font-style: italic;
+    }
+    .story-card h3 {
+        font-family: var(--font-display);
+        font-size: 1.8rem;
+        font-weight: 500;
+        margin-bottom: 16px;
+    }
+    .story-card p {
+        color: var(--text-muted);
+        font-style: italic;
+        font-weight: 300;
+        line-height: 1.8;
+    }
+    
+    /* Philosophy Pillars */
+    .philosophy-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 32px;
+    }
+    .philosophy-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 40px 32px;
+        text-align: center;
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+    }
+    .philosophy-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+    .p-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        margin: 0 auto 24px;
+    }
+    .philosophy-card h3 {
+        font-family: var(--font-display);
+        font-size: 1.4rem;
+        font-weight: 500;
+        margin-bottom: 12px;
+    }
+    .philosophy-card p {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        line-height: 1.7;
+        font-weight: 300;
+    }
+
+    @media (max-width: 992px) {
+        .about-grid {
+            grid-template-columns: 1fr;
+            gap: 48px;
+        }
+        .philosophy-grid {
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+        .about-card.story-card {
+            padding: 32px;
+        }
+    }
+</style>
+
+<%- include('partials/footer') %>

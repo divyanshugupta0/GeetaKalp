@@ -84,6 +84,13 @@ document.addEventListener('DOMContentLoaded', updateCartCount);
 async function proceedToCheckout(event) {
     event.preventDefault();
     
+    // Check if user is logged in
+    if (!currentUser) {
+        showToast('Please login to proceed with checkout', 'warning');
+        openLoginModal();
+        return;
+    }
+    
     const cart = getCart();
     if (!cart || cart.length === 0) {
         showToast('Your cart is empty!', 'error');

@@ -1,0 +1,248 @@
+<%- include('partials/header') %>
+
+<section class="page-hero page-hero-sm">
+    <div class="container">
+        <h1 class="page-title">Contact Us</h1>
+        <p class="page-subtitle">We are here to assist you with orders, product inquiries, or natural wellness consultations</p>
+    </div>
+</section>
+
+<section class="section contact-section">
+    <div class="container">
+        <div class="contact-grid">
+            <!-- Contact details -->
+            <div class="contact-info-column animate-in">
+                <div class="contact-card info-card">
+                    <h3 class="contact-card-title">Get in Touch</h3>
+                    <p class="contact-card-text">Have a question or just want to talk wellness? Reach out to us through any of these channels.</p>
+                    
+                    <div class="info-list">
+                        <div class="info-item">
+                            <div class="info-icon"><i class="fas fa-map-marker-alt"></i></div>
+                            <div class="info-copy">
+                                <h4>Our Sanctuary</h4>
+                                <p>Geeta Kalp Wellness Center, New Delhi, India</p>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-icon"><i class="fas fa-phone-alt"></i></div>
+                            <div class="info-copy">
+                                <h4>Call Support</h4>
+                                <p>+91-XXXXX-XXXXX</p>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-icon"><i class="fas fa-envelope"></i></div>
+                            <div class="info-copy">
+                                <h4>Email Inquiries</h4>
+                                <p>support@geetakalp.com</p>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon"><i class="fas fa-clock"></i></div>
+                            <div class="info-copy">
+                                <h4>Consultation Hours</h4>
+                                <p>Monday – Saturday: 10:00 AM – 7:00 PM</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact form -->
+            <div class="contact-form-column animate-in">
+                <div class="contact-card form-card">
+                    <h3 class="contact-card-title">Send a Message</h3>
+                    <form id="contactForm" onsubmit="handleContactSubmit(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="contactName">Your Name</label>
+                                <input type="text" id="contactName" class="form-input" placeholder="John Doe" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contactEmail">Your Email</label>
+                                <input type="email" id="contactEmail" class="form-input" placeholder="john@example.com" required>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="contactPhone">Phone Number (Optional)</label>
+                                <input type="tel" id="contactPhone" class="form-input" placeholder="+91 XXXXX XXXXX">
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="contactSubject">Subject</label>
+                                <input type="text" id="contactSubject" class="form-input" placeholder="Product Inquiry / Consultation Request" required>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="contactMessage">Message</label>
+                                <textarea id="contactMessage" class="form-input" rows="5" placeholder="How can we help you on your wellness journey?" required></textarea>
+                            </div>
+                        </div>
+                        <div style="margin-top: 24px;">
+                            <button type="submit" class="btn btn-primary" id="contactSubmitBtn">
+                                Send Message <i class="fas fa-paper-plane" style="margin-left: 8px;"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .contact-section {
+        padding-top: 60px;
+        padding-bottom: 100px;
+    }
+    .contact-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 48px;
+        align-items: start;
+    }
+    .contact-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 40px;
+        box-shadow: var(--shadow-lg);
+    }
+    .contact-card-title {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        font-weight: 500;
+        margin-bottom: 16px;
+        color: var(--text);
+    }
+    .contact-card-text {
+        color: var(--text-muted);
+        margin-bottom: 32px;
+        font-weight: 300;
+    }
+    .info-list {
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+    }
+    .info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+    }
+    .info-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    .info-copy h4 {
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 4px;
+        color: var(--text);
+    }
+    .info-copy p {
+        color: var(--text-muted);
+        font-weight: 300;
+        font-size: 0.95rem;
+    }
+    
+    /* Form Styles */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+    .form-group label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        font-weight: 600;
+        letter-spacing: 0.05em;
+    }
+    .form-input {
+        padding: 14px 20px;
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        border: 1px solid transparent;
+        outline: none;
+        color: var(--text);
+        transition: var(--transition);
+        font-size: 0.95rem;
+    }
+    .form-input:focus {
+        border-color: var(--primary);
+        background: var(--bg-card);
+        box-shadow: 0 0 0 4px rgba(0, 107, 29, 0.1);
+    }
+    textarea.form-input {
+        resize: vertical;
+    }
+
+    @media (max-width: 992px) {
+        .contact-grid {
+            grid-template-columns: 1fr;
+            gap: 32px;
+        }
+        .contact-card {
+            padding: 32px 24px;
+        }
+    }
+    @media (max-width: 576px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    async function handleContactSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('contactSubmitBtn');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        btn.disabled = true;
+
+        const messageData = {
+            name: document.getElementById('contactName').value.trim(),
+            email: document.getElementById('contactEmail').value.trim(),
+            phone: document.getElementById('contactPhone').value.trim() || null,
+            subject: document.getElementById('contactSubject').value.trim(),
+            message: document.getElementById('contactMessage').value.trim(),
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+        };
+
+        try {
+            // Save to Firebase database under `contact_messages`
+            await firebase.database().ref('contact_messages').push(messageData);
+            
+            showToast('Message sent successfully! We will contact you soon.');
+            document.getElementById('contactForm').reset();
+        } catch (error) {
+            console.error('Error submitting contact form:', error);
+            showToast('Failed to send message. Please try again.', 'error');
+        } finally {
+            btn.innerHTML = 'Send Message <i class="fas fa-paper-plane" style="margin-left: 8px;"></i>';
+            btn.disabled = false;
+        }
+    }
+</script>
+
+<%- include('partials/footer') %>

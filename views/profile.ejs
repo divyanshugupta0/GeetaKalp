@@ -45,9 +45,37 @@
                     <div id="tab-orders" class="profile-tab">
                         <h2 class="profile-tab-title">My Orders</h2>
                         <div id="ordersList">
-                            <div style="text-align: center; padding: 40px; color: var(--text-muted);">
-                                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 16px;"></i>
-                                <p>Loading your orders...</p>
+                            <!-- SkelKit Loading Skeletons -->
+                            <div class="order-card-skeleton-container" style="display: flex; flex-direction: column; gap: 20px;">
+                                <% for (let i = 0; i < 2; i++) { %>
+                                <div class="order-card" style="pointer-events: none; margin-bottom: 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden;">
+                                    <div class="order-card-header" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--bg-elevated);">
+                                        <div style="display: flex; gap: 24px;">
+                                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                                <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 80px; height: 10px; border-radius: 4px;"></div>
+                                                <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 60px; height: 14px; border-radius: 4px;"></div>
+                                            </div>
+                                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                                <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 50px; height: 10px; border-radius: 4px;"></div>
+                                                <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 70px; height: 14px; border-radius: 4px;"></div>
+                                            </div>
+                                        </div>
+                                        <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 90px; height: 26px; border-radius: 50px;"></div>
+                                    </div>
+                                    <div class="order-card-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px; background: var(--bg-card);">
+                                        <div style="display: flex; align-items: center; gap: 16px;">
+                                            <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 60px; height: 60px; border-radius: var(--radius-sm);"></div>
+                                            <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
+                                                <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 200px; height: 16px; border-radius: 4px;"></div>
+                                                <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 120px; height: 12px; border-radius: 4px;"></div>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+                                            <div data-skelkit="rect" data-skelkit-animation="shimmer" style="width: 140px; height: 38px; border-radius: var(--radius-full);"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <% } %>
                             </div>
                         </div>
                     </div>
@@ -538,6 +566,13 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         btn.disabled = true;
 
+        const fields = ['#profPhone', '#profAddress', '#profCity', '#profState', '#profPincode'];
+        
+        // Apply auto skeletons to input fields
+        if (typeof SkelKit !== 'undefined') {
+            fields.forEach(selector => SkelKit.auto(selector));
+        }
+
         const data = {
             phone: document.getElementById('profPhone').value,
             address: document.getElementById('profAddress').value,
@@ -552,6 +587,10 @@
         } catch (error) {
             showToast('Failed to save address', 'error');
         } finally {
+            // Remove skeletons from fields
+            if (typeof SkelKit !== 'undefined') {
+                fields.forEach(selector => SkelKit.reveal(selector));
+            }
             btn.innerHTML = 'Save Changes';
             btn.disabled = false;
         }

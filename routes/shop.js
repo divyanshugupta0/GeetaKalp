@@ -239,4 +239,32 @@ router.get('/order/:id', (req, res) => {
     });
 });
 
+// ─── Wishlist Page ───
+router.get('/wishlist', (req, res) => {
+    res.render('wishlist', {
+        title: 'My Wishlist | Geeta Kalp',
+        metaDescription: 'View your saved products and wishlist at Geeta Kalp.',
+        canonicalUrl: `${req.protocol}://${req.get('host')}/wishlist`
+    });
+});
+
+// ─── Contact Page ───
+router.get('/contact', (req, res) => {
+    res.render('contact', {
+        title: 'Contact Us | Geeta Kalp',
+        metaDescription: 'Get in touch with the Geeta Kalp team. We are here to help with orders, products, and any questions.',
+        canonicalUrl: `${req.protocol}://${req.get('host')}/contact`
+    });
+});
+
+// ─── About Page ───
+router.get('/about', (req, res) => {
+    res.render('about', {
+        title: 'About Us | Geeta Kalp',
+        metaDescription: 'Learn about Geeta Kalp — our mission to bring premium botanical wellness products ethically sourced from nature.',
+        canonicalUrl: `${req.protocol}://${req.get('host')}/about`
+    });
+});
+
 module.exports = router;
+

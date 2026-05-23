@@ -25,6 +25,7 @@
 
     <!-- Styles -->
     <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/skelkit/skelkit.css">
 
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -79,6 +80,8 @@
                 <a href="/shop" class="nav-link">Shop</a>
                 <a href="/shop?category=new-arrivals" class="nav-link">New Arrivals</a>
                 <a href="/shop?sort=discount" class="nav-link">Offers</a>
+                <a href="/about" class="nav-link">About</a>
+                <a href="/contact" class="nav-link">Contact</a>
             </div>
 
             <div class="nav-actions">
@@ -107,6 +110,10 @@
                     </div>
                 </div>
 
+                <a href="/wishlist" class="nav-action-btn desktop-nav-action" id="wishlistBtn" aria-label="Wishlist" style="position: relative;">
+                    <i class="far fa-heart"></i>
+                    <span class="wishlist-count" id="wishlistCount">0</span>
+                </a>
                 <a href="/cart" class="nav-action-btn cart-btn" id="cartBtn" aria-label="Cart">
                     <i class="fas fa-shopping-bag"></i>
                     <span class="cart-count" id="cartCount">0</span>
